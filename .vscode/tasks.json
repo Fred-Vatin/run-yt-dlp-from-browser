@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "bun update (user script)",
+			"detail": "Met à jour les dépendances installées vers les dernières versions autorisées par package.json",
+			"type": "shell",
+			"command": "bun update",
+			"options": {
+				"cwd": "${workspaceFolder}/user script"
+			},
+			"group": "none",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"echo": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "bun install (user script)",
+			"type": "shell",
+			"detail": "Lit et installe les dépendances listées dans package.json",
+			"command": "bun install",
+			"options": {
+				"cwd": "${workspaceFolder}/user script"
+			},
+			"group": "none",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"echo": true
+			},
+			"problemMatcher": []
+		}
+	]
+}

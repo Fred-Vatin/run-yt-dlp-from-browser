@@ -1,0 +1,41 @@
+// check https://biomejs.dev/guides/configure-biome/
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/*.min.js"] // ignore min.js files
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+    // "lineWidth": 100 // default is `80`
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noRedundantUseStrict": "off"
+      }
+    }
+  },
+  "assist": {
+    "enabled": true
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "json": {
+    "parser": {
+      "allowComments": true
+      // "allowTrailingCommas": false
+    }
+  }
+}

@@ -1,0 +1,9 @@
+// <workspace>/.vscode/settings.json
+{
+	"biome.enabled": true,
+	"biome.lsp.trace.server": "verbose",
+	"biome.requireConfiguration": true,
+	"biome.suggestInstallingGlobally": false,
+	"biome.configurationPath": "./biome.jsonc"
+	// "biome.lsp.bin": "$PATH"
+}

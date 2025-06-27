@@ -1,0 +1,13 @@
+// <workspace>/.vscode/settings.json
+{
+	"biome.enabled": true,
+	"biome.lsp.trace.server": "verbose",
+	"biome.requireConfiguration": true,
+	"biome.suggestInstallingGlobally": false,
+	"biome.configurationPath": "./user script/biome.jsonc",
+	"biome.lsp.bin": {
+		"darwin-arm64": "./user script/node_modules/@biomejs/biome/bin/biome",
+
+		"win32-x64": "./user script/node_modules/@biomejs/cli-win32-x64/biome.exe"
+	}
+}

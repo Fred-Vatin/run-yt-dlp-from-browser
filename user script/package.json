@@ -1,0 +1,13 @@
+{
+	"dependencies": {},
+	"devDependencies": {
+		"@biomejs/biome": "^2.0.6",
+		"@types/bun": "latest",
+		"@types/greasemonkey": "^4.0.7"
+	},
+	"name": "user-script",
+	"private": true,
+	"peerDependencies": {
+		"typescript": "^5.8.3"
+	}
+}
