@@ -15,6 +15,8 @@ _See wiki if you don’t know how to install and apply the requirements._
 - `yt-dlp` and `ffmpeg` commands must be accessible in your `PATH`
 - your browser needs the extension [Tampermonkey](https://www.tampermonkey.net/) to be installed
 - your Windows user account must be allowed to run powershell script `.ps1`
+- [Powershell 7](https://github.com/PowerShell/PowerShell) (strongly recommend to use winget to install it)
+- (optional) by default it uses [Windows Terminal](https://apps.microsoft.com/detail/9n0dx20hk701) to run the powershell script that runs the `yt-dlp` command
 
 ## Installation
 

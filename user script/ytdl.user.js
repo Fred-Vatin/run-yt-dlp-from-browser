@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.0
+// @version      1.0.1
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -19,6 +19,8 @@
 // @grant        GM_notification
 // @grant        GM_openInTab
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @license MIT
 // ==/UserScript==
 
@@ -27,8 +29,20 @@
   const PROTOCOL = "ytdl://";
   const EXCLUDE_URL_MATCH = ["accounts.youtube.com"];
   const DOWNLOAD_DIR = "E:/OneDrive/Téléchargements/yt-dlp";
-  // the first time set this to 10000 to let the time to  user to authorize the default handler for the protocol
-  const closeDelay = 1000;
+
+  // Try to determine if this script is run for the first time
+  const firstTime = GM_getValue("first-time", true);
+  console.log("Is script run for the first time:", firstTime);
+
+  let closeDelay;
+
+  if (firstTime === true) {
+    GM_setValue("first-time", false);
+    // It will let time to user to accept the protocol default handler
+    closeDelay = 100000;
+  } else {
+    closeDelay = 1000;
+  }
 
   let URL = window.location.href;
   console.log("URL (at first loading): ", URL);

@@ -6,6 +6,7 @@
 		"@types/greasemonkey": "^4.0.7"
 	},
 	"name": "user-script",
+	"version": "1.0.0",
 	"private": true,
 	"peerDependencies": {
 		"typescript": "^5.8.3"
