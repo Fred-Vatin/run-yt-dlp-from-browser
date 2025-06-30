@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.1
+// @version      1.0.3
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -21,6 +21,7 @@
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM_info
 // @license MIT
 // ==/UserScript==
 
@@ -30,18 +31,23 @@
   const EXCLUDE_URL_MATCH = ["accounts.youtube.com"];
   const DOWNLOAD_DIR = "E:/OneDrive/Téléchargements/yt-dlp";
 
-  // Try to determine if this script is run for the first time
-  const firstTime = GM_getValue("first-time", true);
-  console.log("Is script run for the first time:", firstTime);
-
   let closeDelay;
 
-  if (firstTime === true) {
-    GM_setValue("first-time", false);
-    // It will let time to user to accept the protocol default handler
-    closeDelay = 100000;
-  } else {
-    closeDelay = 1000;
+  // Log the script version
+  console.log(`Run ${GM_info.script.name} ${GM_info.script.version}`);
+
+  // Try to determine if this script is run for the first time at every download action
+  function CheckFirstTime() {
+    const firstTime = GM_getValue("first-time", true);
+    console.log("Is script run for the first time:", firstTime);
+
+    if (firstTime === true) {
+      GM_setValue("first-time", false);
+      // It will let time to user to accept the protocol default handler
+      closeDelay = 100000;
+    } else {
+      closeDelay = 1000;
+    }
   }
 
   let URL = window.location.href;
@@ -85,6 +91,7 @@
 
   // Fonction pour ouvrir l'URL ytdl://video
   function openYtdlURL(type, quality = "") {
+    CheckFirstTime();
     URL = window.location.href;
     console.log("URL: ", URL);
 

@@ -19,6 +19,16 @@
 					"label": ""
 				}
 			]
+		},
+		{
+			"path": "user script/ytdl.user.js",
+			"bookmarks": [
+				{
+					"line": 37,
+					"column": 0,
+					"label": ""
+				}
+			]
 		}
 	]
 }

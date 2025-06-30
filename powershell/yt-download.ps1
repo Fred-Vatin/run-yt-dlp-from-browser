@@ -173,7 +173,9 @@ if ($man) {
 ===========================================================================#>
 # Handle -url parameter if no other parameters are specified
 if ($url -and -not $install -and -not $uninstall) {
-  Write-Host "`nScript called with argument -url = $url `n"
+  Write-Host "`nScript called with argument" -NoNewline
+  Write-Host "-url" -ForegroundColor Magenta
+  Write-Host "`t$url`n"
 
   try {
     # Définir la longueur du préfixe "ytdl://download/?"

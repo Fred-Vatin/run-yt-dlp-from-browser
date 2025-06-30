@@ -135,3 +135,4 @@ dist
 .pnp.*
 
 user script/.vscode/bookmarks.json
+.vscode/bookmarks.json
