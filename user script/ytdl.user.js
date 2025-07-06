@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.3
+// @version      1.0.4
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -27,9 +27,9 @@
 
 (() => {
   "use strict";
-  const PROTOCOL = "ytdl://";
+  const PROTOCOL = "ytdl:"; // don’t change this
   const EXCLUDE_URL_MATCH = ["accounts.youtube.com"];
-  const DOWNLOAD_DIR = "E:/OneDrive/Téléchargements/yt-dlp";
+  const DOWNLOAD_DIR = ""; // if you want to force another download dir then the one set in the powershell script;
 
   let closeDelay;
 
@@ -57,39 +57,39 @@
    * ℹ		DETECT URL CHANGE TO RE-RUN THE SCRIPT
   ===========================================================================*/
 
-  // Fonction à exécuter lors d'un changement d'URL
+  // Function to run when URL change
   function onUrlChange() {
     const currentUrl = window.location.href;
     if (currentUrl !== URL) {
-      console.log("URL changée : ", currentUrl);
+      console.log("URL changed : ", currentUrl);
       URL = currentUrl;
 
       createButton();
     }
   }
 
-  // Écoute l'événement popstate utilisé par certains sites ou le navigateur (cela modifie l’url)
+  // Listen popstate event (that can change URL) used by some sites or the browser
   window.addEventListener("popstate", onUrlChange);
 
-  // Écoute l'événement de fin de navigation de youtube qui change l’url
+  // Listen a youtube specific event that change the URL
   document.addEventListener("yt-navigate-finish", onUrlChange);
 
-  // Appelle ces fonctions immédiatement pour la page initiale
+  // same for music.youtube
+  document.addEventListener("yt-page-data-updated", onUrlChange);
+
+  // Call these functions immediately on the initial page load
   onUrlChange();
   createButton();
 
-  // Exécuter la fonction au chargement de la page
-  // window.addEventListener("load", createButton);
-
   /**==========================================================================
-  * ℹ		BUILD URL PROTOCOL ytdl://
+  * ℹ		BUILD URL PROTOCOL ytdl:
   ===========================================================================*/
   function isUrlExcluded(url) {
     // Checks if the URL matches any of the elements in the excludeUrlMatch array
     return EXCLUDE_URL_MATCH.some((e) => url.includes(e));
   }
 
-  // Fonction pour ouvrir l'URL ytdl://video
+  // Function to open the URL ytdl:
   function openYtdlURL(type, quality = "") {
     CheckFirstTime();
     URL = window.location.href;
@@ -116,20 +116,22 @@
       return;
     }
 
-    const ytdlURL = `${PROTOCOL}download?type=${type}&quality=${quality}&dldir=${DOWNLOAD_DIR}&url=${URL}`;
-    // Utilise GM_openInTab pour tenter d'ouvrir l'URL.
-    // Cela devrait déclencher le gestionnaire de protocole externe si ytdl:// est enregistré.
+    const ytdlURL = `${PROTOCOL}?type=${type}&quality=${quality}&dldir=${DOWNLOAD_DIR}&url=${URL}`;
+
+    // Use GM_openInTab to open the URL
+    // This should trigger the ytdl: protocol handler if installed properly on the OS
     const tab = GM_openInTab(ytdlURL, {
       active: false,
       insert: true,
       setParent: true,
       loadInBackground: true,
     });
-    console.info(`Tentative d'ouverture de l'URL : ${ytdlURL}`);
-    // Ferme l'onglet après un court délai pour laisser le gestionnaire de protocole se déclencher
+    console.info(`Try to open URL : ${ytdlURL}`);
+
+    // Auto close the opened tab after a delay
     setTimeout(() => {
       tab.close();
-    }, closeDelay); // Ajustez le délai (en millisecondes) si nécessaire
+    }, closeDelay); // Adjut this variable (in milliseconds) where it is delcared if necessary
 
     GM_notification({
       text: `Type: ${type}\nQuality: ${quality}`,
@@ -149,7 +151,7 @@
   * ℹ		TAMPERMONKEY MENU CREATION
   ===========================================================================*/
 
-  // Enregistre les commandes dans le menu Tampermonkey
+  // Register those commands in Tampermonkey menu
   GM_registerMenuCommand(
     "Download auto (recommanded)",
     () => openYtdlURL("auto"),
@@ -189,6 +191,14 @@
     title: "Shortkey: F. Show URL details in terminal.",
   });
 
+  GM_registerMenuCommand(
+    "Reset first time value",
+    GM_setValue("first-time", true),
+    {
+      title: "The opened ytdl: tab will stay open longer",
+    },
+  );
+
   /**==========================================================================
   * ℹ		CREATE BUTTON on YouTube
   ===========================================================================*/
@@ -215,7 +225,7 @@
       if (!isYoutube && !isMusic) {
         ytdlContainerObserver.disconnect();
         console.log(
-          "Button cannot be created because URL doesn't match YouTube or YouTube Music",
+          "Button cannot be created because URL doesn't match YouTube or YouTube Music or a video is not playing",
         );
         deleteButton(containerID);
         return;
@@ -305,7 +315,7 @@
         button.remove(); // Removes the element from the DOM
         console.log("button detected and removed");
       } else {
-        console.log("Tried to delete the button but is seems it dosn’t exist");
+        console.log("Tried to delete the button but it seems it doesn’t exist");
       }
     }
 
