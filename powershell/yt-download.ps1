@@ -178,17 +178,13 @@ if ($url -and -not $install -and -not $uninstall) {
   Write-Host "`t$url`n"
 
   try {
-    # Définir la longueur du préfixe "ytdl://download/?"
-    # C'est la longueur de "ytdl://download/" (16) + le '?' (1) = 17 caractères
-    $prefix = "${protocol}://download/?"
-    $prefixLength = $prefix.Length # Pour être sûr, on calcule dynamiquement
 
     # Extraire la chaîne de requête en fonction du préfixe
-    if ($url.StartsWith($prefix)) {
-      $queryString = $url.Substring($prefixLength)
+    if ($url.StartsWith("${protocol}:?")) {
+      $queryString = ($url -split '\?')[1]
     }
     else {
-      TerminateWithError -errorMessage "L’url attendue doit commencer par: $prefix`n   Or l’url est: $url"
+      TerminateWithError -errorMessage "L’url attendue doit commencer par: \"${protocol}:?\"`n   Or l’url est: $url"
     }
 
     # Initialiser le hashtable pour stocker les paramètres
@@ -460,7 +456,7 @@ if ($uninstall) {
     Remove-Item -Path "$ytdlKey" -Recurse -Force -ErrorAction SilentlyContinue
 
     if (Test-Path -Path $ytdlKey) {
-      Throw "$ytdlKey could NOT be deleted"
+      throw "$ytdlKey could NOT be deleted"
     }
     else {
       Write-Host "$ytdlKey deleted from the registry" -ForegroundColor Yellow
