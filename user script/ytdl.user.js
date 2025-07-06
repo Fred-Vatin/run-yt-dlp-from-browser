@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.4
+// @version      1.0.5
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -193,7 +193,10 @@
 
   GM_registerMenuCommand(
     "Reset first time value",
-    GM_setValue("first-time", true),
+    () => {
+      GM_setValue("first-time", true);
+      console.log(`Set first-time value to true`);
+    },
     {
       title: "The opened ytdl: tab will stay open longer",
     },
