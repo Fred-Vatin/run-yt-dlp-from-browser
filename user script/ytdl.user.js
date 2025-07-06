@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.7
+// @version      1.0.23
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -59,8 +59,10 @@
   ===========================================================================*/
 
 	// Function to run when URL change
-	function onUrlChange() {
+	function onUrlChange(event = "start") {
 		const currentUrl = window.location.href;
+		console.log(`onUrlChange call by event: ${event}`);
+
 		if (currentUrl !== URL) {
 			console.log("URL changed : ", currentUrl);
 			URL = currentUrl;
@@ -70,14 +72,22 @@
 	}
 
 	// Listen popstate event (that can change URL) used by some sites or the browser
-	// window.addEventListener("popstate", onUrlChange);
+	window.addEventListener("popstate", onUrlChange);
 
 	/**==========================================================================
   * ℹ		HANDLE YOUTUBE
   ===========================================================================*/
-	if (URL_ORIGIN.startsWith("https://youtube.com")) {
+	if (URL_ORIGIN.startsWith("https://www.youtube.com")) {
 		// Listen a youtube specific event that change the URL
-		document.addEventListener("yt-navigate-finish", onUrlChange);
+		// document.addEventListener("yt-navigate-start", () => {
+		// 	onUrlChange("yt-navigate-start");
+		// });
+		// document.addEventListener("yt-navigate-finish", () => {
+		// 	onUrlChange("yt-navigate-finish");
+		// });
+		document.addEventListener("yt-page-data-updated", () => {
+			onUrlChange("yt-page-data-updated");
+		});
 	}
 
 	/**==========================================================================
@@ -115,9 +125,11 @@
 								const hasAttribute = player.hasAttribute("player-page-open");
 
 								if (!hasAttribute) {
-									console.log(`The player bar is visible.`);
+									console.log(`The player bar is NOT visible. Delete button.`);
+									createButton(true);
 								} else {
-									console.log(`The player bar is NOT visible.`);
+									console.log(`The player bar is visible. Create button`);
+									createButton();
 								}
 							} else {
 								console.log("<ytmusic-player-bar> not found in the DOM.");
@@ -135,7 +147,7 @@
 			playerBarObserver.observe(playerBar, config);
 
 			console.log(
-				"Monitoring of <ytmusic-player-bar> for the 'visibility' attribute started.",
+				"Monitoring of <ytmusic-player-bar> for the 'player-page-open' attribute started.",
 			);
 
 			// Optional: If you want to stop observing at a certain point
@@ -186,7 +198,16 @@
 			return;
 		}
 
-		const ytdlURL = `${PROTOCOL}?type=${type}&quality=${quality}&dldir=${DOWNLOAD_DIR}&url=${URL}`;
+		let ytdlURL = `${PROTOCOL}?type=${type}`;
+
+		// Array to collect query parameters
+		const params = [];
+		if (quality) params.push(`quality=${quality}`);
+		if (DOWNLOAD_DIR) params.push(`dldir=${DOWNLOAD_DIR}`);
+
+		// Join parameters with '&' and append to URL
+		ytdlURL += params.join("&");
+		ytdlURL += `&url=${URL}`;
 
 		// Use GM_openInTab to open the URL
 		// This should trigger the ytdl: protocol handler if installed properly on the OS
@@ -275,15 +296,34 @@
 	/**==========================================================================
   * ℹ		CREATE BUTTON on YouTube
   ===========================================================================*/
-	function createButton() {
+	function createButton(del = false) {
 		let isButtonCreated = false; // Variable pour éviter les créations multiples
 		let isYoutube = false;
 		let isMusic = false;
 		let functionCall = 1;
 		const containerID = "ytdl-button";
 
+		// Observer les changements dynamiques dans le DOM
+		const ytdlContainerObserver = new MutationObserver(() => {
+			if (!del) {
+				console.log("Global mutation detected, running createYtdlButton()");
+				createYtdlButton();
+			} else {
+				console.log("Global mutation detected, running deleteButton()");
+				deleteButton(containerID);
+			}
+		});
+
+		ytdlContainerObserver.observe(document.body, {
+			childList: true,
+			subtree: true,
+		});
+
 		function createYtdlButton() {
 			console.log("createYtdlButton() call:", functionCall++);
+
+			// update url
+			URL = window.location.href;
 
 			if (URL.startsWith("https://www.youtube.com/watch?v=")) {
 				isYoutube = true;
@@ -293,10 +333,10 @@
 				isMusic = true;
 			}
 
+			console.log(`url: ${URL}`);
 			console.log(`isYouTube: ${isYoutube}, isMusic: ${isMusic}`);
 
 			if (!isYoutube && !isMusic) {
-				ytdlContainerObserver.disconnect();
 				console.log(
 					"Button cannot be created because URL doesn't match YouTube or YouTube Music or a video is not playing",
 				);
@@ -387,8 +427,10 @@
 			if (button) {
 				button.remove(); // Removes the element from the DOM
 				console.log("button detected and removed");
+				ytdlContainerObserver.disconnect();
 			} else {
 				console.log("Tried to delete the button but it seems it doesn’t exist");
+				ytdlContainerObserver.disconnect();
 			}
 		}
 
@@ -507,19 +549,5 @@
 				subtree: true,
 			});
 		}
-
-		// Exécuter la fonction au chargement de la page
-		// window.addEventListener("load", createYtdlButton);
-
-		// Observer les changements dynamiques dans le DOM
-		const ytdlContainerObserver = new MutationObserver(() => {
-			console.log("Global mutation detected, running createYtdlButton()");
-			createYtdlButton();
-		});
-
-		ytdlContainerObserver.observe(document.body, {
-			childList: true,
-			subtree: true,
-		});
 	}
 })();
