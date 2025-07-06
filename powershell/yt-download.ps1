@@ -38,7 +38,7 @@ New-Variable -Name command -Value "cmd.exe /c wt.exe -p ""PowerShell 7"" -- pwsh
 
 # ⚠	NON RECOMMENDED
 # If for some reason, you would want to change the protocol name.
-# But you will have to change the userscript run by your browser.
+# But you will also have to change the userscript run by your browser.
 New-Variable -Name protocol -Value "ytdl"
 
 New-Variable -Name repo -Value "https://github.com/Fred-Vatin/run-yt-dlp-from-browser" -Option Constant
@@ -173,67 +173,66 @@ if ($man) {
 ===========================================================================#>
 # Handle -url parameter if no other parameters are specified
 if ($url -and -not $install -and -not $uninstall) {
-  Write-Host "`nScript called with argument" -NoNewline
+  Write-Host "`nScript called with argument " -NoNewline
   Write-Host "-url" -ForegroundColor Magenta
   Write-Host "`t$url`n"
 
   try {
 
-    # Extraire la chaîne de requête en fonction du préfixe
+    # Extract parts after ytdl:?
     if ($url.StartsWith("${protocol}:?")) {
-      $queryString = ($url -split '\?')[1]
+      $startIndex = $url.IndexOf("${protocol}:?") + "${protocol}:?".Length
+      $queryString = $url.Substring($startIndex)
     }
     else {
-      TerminateWithError -errorMessage "L’url attendue doit commencer par: \"${protocol}:?\"`n   Or l’url est: $url"
+      TerminateWithError -errorMessage "Expected URL must start with: \"${protocol}:?\"`n   However URL is: $url"
     }
 
-    # Initialiser le hashtable pour stocker les paramètres
+    # Init hashtable to stock parameters
     $parameters = @{}
 
-    # Parser la chaîne de requête extraite
+    # parse parameters
     if ($queryString -ne "") {
       $pairStrings = $queryString.Split('&')
 
       foreach ($pairString in $pairStrings) {
         $parts = $pairString.Split('=')
         if ($parts.Length -ge 2) {
-          # Utiliser -ge 2 pour gérer les cas avec "=" dans la valeur
+          # Decode the key from URL encoding
           $key = [System.Web.HttpUtility]::UrlDecode($parts[0])
-          # Joindre les parties restantes si la valeur contenait des signes '='
+          # Join the remaining parts to handle values with '=' signs and decode from URL encoding
           $value = [System.Web.HttpUtility]::UrlDecode(($parts | Select-Object -Skip 1) -join '=')
 
-          # **Logique spécifique pour le paramètre 'url' avec les guillemets**
+          # Specific logic for the 'url' parameter to handle quotes
           if ($key -eq 'url') {
-            # Vérifier et retirer les guillemets simples s'ils sont présents
+            # Check and remove single quotes if present around the value
             if ($value.StartsWith("'") -and $value.EndsWith("'") -and $value.Length -ge 2) {
               $value = $value.Substring(1, $value.Length - 2)
             }
           }
-          $parameters[$key] = $value
-        }
-        elseif ($parts.Length -eq 1) {
-          $key = [System.Web.HttpUtility]::UrlDecode($parts[0])
-          $parameters[$key] = "" # Paramètre sans valeur
+          # Add key-value pair to parameters if the value is not null or empty
+          if ($null -ne $value -and $value -ne "") {
+            $parameters[$key] = $value
+          }
         }
       }
     }
 
-    Write-Host "Paramètres de l'URL :"
+    Write-Host "URL parameters :"
     $parameters.GetEnumerator() | ForEach-Object {
       Write-Host "  $($_.Key) = $($_.Value)" -ForegroundColor Gray
     }
 
-    # Accès spécifique aux paramètres pour vérification
     if ($parameters.ContainsKey('type')) {
       $global:TYPE = $($parameters['type'])
     }
     else {
-      TerminateWithError -errorMessage "Le paramètre [type] est manquant. Or il est requis pour indiquer à yt-dlp ce qu’il doit télécharger."
+      TerminateWithError -errorMessage "[type] parameter is missing. It is required to tell yt-dlp what streams he has to download."
     }
 
   }
   catch {
-    TerminateWithError -errorMessage "Erreur lors du traitement de l'URL" -exception $_.Exception
+    TerminateWithError -errorMessage "Error while processing URL" -exception $_.Exception
   }
 
   <#*==========================================================================
@@ -251,23 +250,23 @@ if ($url -and -not $install -and -not $uninstall) {
     $global:DL_URL = $($parameters['url'])
   }
   else {
-    TerminateWithError -errorMessage "Le paramètre [url] est manquant. Or il est requis pour indiquer à yt-dlp ce qu’il doit télécharger."
+    TerminateWithError -errorMessage "[url] parameter is missing. It is required to tell yt-dlp the download source."
   }
 
   # handle auto
   if ($TYPE -eq "auto") {
     Write-Host "- Mode : auto" -ForegroundColor Green
 
-    # Vérifier si $DL_URL est de type audio
-    foreach ($prefix in $autoAudio) {
-      if ($DL_URL -like "$prefix*") {
-        $global:TYPE = "audio" # redéfinir type
-        Write-Host "`tAudio détecté car correspond à $prefix"
+    # Check if $DL_URL is type : audio
+    foreach ($audioPrefix in $autoAudio) {
+      if ($DL_URL -like "$audioPrefix*") {
+        $global:TYPE = "audio" # redefine type
+        Write-Host "`tAudio detected because it matches $audioPrefix"
         break
       }
       else {
-        $global:TYPE = "video" # redéfinir type
-        Write-Host "`tVidéo détectée car ne correspond à aucun pattern audio."
+        $global:TYPE = "video" # redefine type
+        Write-Host "`tVideo will be used because no audio pattern detected in URL."
       }
     }
   }
@@ -283,7 +282,7 @@ if ($url -and -not $install -and -not $uninstall) {
     $global:DL_DIR = $directory
   }
 
-  # Tester l'existence du dossier
+  # Test if download dir exists
   if (Test-Path -Path $DL_DIR -PathType Container) {
     Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
   }
@@ -308,7 +307,7 @@ if ($url -and -not $install -and -not $uninstall) {
     $global:QUALITY = $($parameters['quality'])
   }
   else {
-    TerminateWithError -errorMessage "Le paramètre [quality] est manquant. Or, même s’il est vide, il est requis."
+    $global:QUALITY = ""
   }
 
 
@@ -316,15 +315,15 @@ if ($url -and -not $install -and -not $uninstall) {
     "audio" {
       Write-Host "- Mode : audio" -ForegroundColor Green
 
-      if (-not $quality) {
-        # Quand quality est une chaîne vide, télécharger le meilleur audio
+      if (-not $QUALITY) {
+        # When QUALITY is an empty string, download the best audio
         $global:options = @(
           "--extract-audio",
           "-o", $output,
           $DL_URL
         )
       }
-      elseif ($quality -eq "forceMp3") {
+      elseif ($QUALITY -eq "forceMp3") {
         $global:options = @(
           "--extract-audio",
           "--audio-format", "mp3",
@@ -338,7 +337,7 @@ if ($url -and -not $install -and -not $uninstall) {
         $global:options = @(
           "--extract-audio",
           "-o", $output,
-          "-f", "bestaudio[ext=$quality]/bestaudio/bestvideo+bestaudio",
+          "-f", "bestaudio[ext=$QUALITY]/bestaudio/bestvideo+bestaudio",
           $DL_URL
         )
       }
@@ -346,8 +345,8 @@ if ($url -and -not $install -and -not $uninstall) {
     "video" {
       Write-Host "- Mode : video" -ForegroundColor Green
 
-      if ($quality) {
-        $videoQuality = "bestvideo[vcodec^=avc1][height<=$quality]+bestaudio[ext=m4a]/bestvideo[height<=$quality]+bestaudio"
+      if ($QUALITY) {
+        $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio"
       }
       $global:options = @(
         "-f", $videoQuality,
@@ -370,14 +369,14 @@ if ($url -and -not $install -and -not $uninstall) {
       Write-Host "- Mode : showUI" -ForegroundColor Green
 
       # run YDL-UI.exe with url and exit
-      Write-Host "Ouverture de l’URL avec YDL-UI"
+      Write-Host "Open URL with YDL-UI"
 
       if (Test-Path -Path $UI_Path -PathType Leaf) {
         Start-Process $UI_Path -ArgumentList $DL_URL
         exit
       }
       else {
-        TerminateWithError -errorMessage "L'exécutable $UI_Path n'existe pas."
+        TerminateWithError -errorMessage "Can not find $UI_Path"
       }
     }
   }
@@ -386,7 +385,7 @@ if ($url -and -not $install -and -not $uninstall) {
   <#*==========================================================================
   * ℹ		TEST COOKIES
   ===========================================================================#>
-  # Tester l'existence du fichier
+  # Test cookie path
   if (Test-Path -Path $myCookies) {
     Write-Host "`- Use user cookies from file" -ForegroundColor Green
   }
@@ -417,14 +416,14 @@ if ($url -and -not $install -and -not $uninstall) {
   if ($TYPE -ne "test") {
     Write-Host "`nOPEN OUTPUT DIRECTORY" -ForegroundColor Cyan
     try {
-      # Ouvrir le dossier de téléchargement
+      # Open download dir in the default file explorer
       Invoke-Item -Path $DL_DIR
     }
     catch {
       TerminateWithError "Invoke-Item -Path $DL_DIR [failed]"
     }
 
-    # Émettre une notification sonore
+    # Play a beep to notify
     [console]::beep(650, 1000)
   }
   WriteTitle "SCRIPT ENDED WITH NO ERROR"
