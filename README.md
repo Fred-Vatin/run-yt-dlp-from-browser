@@ -45,3 +45,9 @@ The user script is configured to automatically check for updates. If a new versi
 Once you read the wiki to understand how it works, you understand how easy it is to use this concept to run any OS commands from a browser.
 
 Just fork this repository and enjoy !
+
+# Trouble shooting
+
+To install the test protocol userscript in [Tampermonkey](https://www.tampermonkey.net/), click below:
+
+[![Install Userscript](https://img.shields.io/badge/Install_Userscript-test-blue?style=for-the-badge)](https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/test-protocol.user.js)

@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         GitHub YTDL Test Protocol Link
 // @namespace    fred.vatin.yt-dlp-test.us
-// @version      1.0.5
-// @description  Adds a "Test Protocol" button for ytdl: to the specified GitHub repository page.
+// @version      1.0.8
+// @description  Adds a "Test Protocol" button in the source GitHub repository page
 // @author       Fred Vatin
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=github.com
+// @updateURL    https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/test-protocol.user.js
+// @downloadURL  https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/test-protocol.user.js
 // @match        https://github.com/Fred-Vatin/run-yt-dlp-from-browser
 // @noframes
 // @grant        none
@@ -36,7 +38,7 @@
 			linkContainer.classList.add("btn", "d-none", "d-md-block", "ml-0");
 			linkContainer.textContent = "Testez le protocole YTDL";
 			linkContainer.setAttribute("target", "_blank");
-			linkContainer.textContent = "Testez le protocole YTDL";
+			linkContainer.textContent = "Test YTDL protocol";
 			linkContainer.href = "ytdl:?test";
 			linkContainer.style.marginRight = "15px";
 
