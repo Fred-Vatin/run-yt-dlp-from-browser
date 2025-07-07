@@ -1,6 +1,6 @@
 Todo:
 
-[Test protocol](ytdl://dl?test)
+<a href="ytdl:?test">Test protocol handler</a>
 
 - [ ] wiki
 
