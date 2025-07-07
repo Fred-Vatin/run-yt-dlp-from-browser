@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.23
+// @version      1.0.24
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -209,14 +209,8 @@
 		ytdlURL += params.join("&");
 		ytdlURL += `&url=${URL}`;
 
-		// Use GM_openInTab to open the URL
 		// This should trigger the ytdl: protocol handler if installed properly on the OS
-		const tab = GM_openInTab(ytdlURL, {
-			active: false,
-			insert: true,
-			setParent: true,
-			loadInBackground: true,
-		});
+		window.location.href = ytdlURL;
 		console.info(`Try to open URL : ${ytdlURL}`);
 
 		// Auto close the opened tab after a delay
