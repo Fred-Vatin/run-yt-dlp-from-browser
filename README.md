@@ -1,6 +1,6 @@
 Todo:
 
-[Test protocol](ytdl:?test)
+[Test protocol](ytdl://dl?test)
 
 - [ ] wiki
 
