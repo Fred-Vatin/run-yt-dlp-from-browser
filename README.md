@@ -1,7 +1,5 @@
 Todo:
 
-<a href="ytdl:?test">Test protocol handler</a>
-
 - [ ] wiki
 
 # Run yt-dlp commands from browser
