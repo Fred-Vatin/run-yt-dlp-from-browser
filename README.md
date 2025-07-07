@@ -1,5 +1,7 @@
 Todo:
 
+[Test protocol](ytdl:?test)
+
 - [ ] wiki
 
 # Run yt-dlp commands from browser
