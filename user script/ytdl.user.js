@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.24
+// @version      1.0.26
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -22,6 +22,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_info
+// @grant        window.onurlchange
 // @license MIT
 // ==/UserScript==
 
@@ -31,35 +32,34 @@
 	const EXCLUDE_URL_MATCH = ["accounts.youtube.com"];
 	const DOWNLOAD_DIR = ""; // if you want to force another download dir then the one set in the powershell script;
 
-	let closeDelay;
-
 	// Log the script version
 	console.log(`Run ${GM_info.script.name} ${GM_info.script.version}`);
 
 	// Try to determine if this script is run for the first time at every download action
-	function CheckFirstTime() {
-		const firstTime = GM_getValue("first-time", true);
-		console.log("Is script run for the first time:", firstTime);
 
-		if (firstTime === true) {
-			GM_setValue("first-time", false);
-			// It will let time to user to accept the protocol default handler
-			closeDelay = 100000;
-		} else {
-			closeDelay = 1000;
-		}
-	}
-
-	const URL_ORIGIN = window.location.href;
+	const URL_ORIGIN = window.location.href; // could be useful if adding more sites support later
 	let URL = window.location.href;
 	console.log("URL (at first loading): ", URL);
 
 	/**==========================================================================
    * ℹ		DETECT URL CHANGE TO RE-RUN THE SCRIPT
   ===========================================================================*/
+	if (window.onurlchange === null) {
+		console.log(
+			"window.onurlchange is supported. Adding 'urlchange' listener.",
+		);
+
+		window.addEventListener("urlchange", () => {
+			onUrlChange("window.onurlchange");
+		});
+	} else {
+		console.log(
+			"window.onurlchange is not supported by this browser this Tampermonkey version.",
+		);
+	}
 
 	// Function to run when URL change
-	function onUrlChange(event = "start") {
+	function onUrlChange(event = "first loading") {
 		const currentUrl = window.location.href;
 		console.log(`onUrlChange call by event: ${event}`);
 
@@ -68,94 +68,6 @@
 			URL = currentUrl;
 
 			createButton();
-		}
-	}
-
-	// Listen popstate event (that can change URL) used by some sites or the browser
-	window.addEventListener("popstate", onUrlChange);
-
-	/**==========================================================================
-  * ℹ		HANDLE YOUTUBE
-  ===========================================================================*/
-	if (URL_ORIGIN.startsWith("https://www.youtube.com")) {
-		// Listen a youtube specific event that change the URL
-		// document.addEventListener("yt-navigate-start", () => {
-		// 	onUrlChange("yt-navigate-start");
-		// });
-		// document.addEventListener("yt-navigate-finish", () => {
-		// 	onUrlChange("yt-navigate-finish");
-		// });
-		document.addEventListener("yt-page-data-updated", () => {
-			onUrlChange("yt-page-data-updated");
-		});
-	}
-
-	/**==========================================================================
-  * ℹ		HANDLE YOUTUBE MUSIC
-  ===========================================================================*/
-	if (URL_ORIGIN.startsWith("https://music.youtube.com")) {
-		// 1. Select the target element
-		const playerBar = document.querySelector("ytmusic-player-bar.ytmusic-app");
-
-		// Ensure the element exists before proceeding
-		if (playerBar) {
-			console.log(`playerBar detected`);
-
-			// 2. Create a new MutationObserver instance
-			const playerBarObserver = new MutationObserver(
-				(mutationsList, observer) => {
-					// Iterate over each detected mutation
-					for (const mutation of mutationsList) {
-						// Check if the change is an attribute change
-						if (
-							mutation.type === "attributes" &&
-							mutation.attributeName === "player-page-open"
-						) {
-							console.log(
-								"The 'player-page-open' attribute has been added or removed to <ytmusic-player-bar>!",
-							);
-
-							// Reselect the player bar
-							const player = document.querySelector(
-								"ytmusic-player-bar.ytmusic-app",
-							);
-
-							if (player) {
-								// Check if the element exists and has the expected attribute when playing
-								const hasAttribute = player.hasAttribute("player-page-open");
-
-								if (!hasAttribute) {
-									console.log(`The player bar is NOT visible. Delete button.`);
-									createButton(true);
-								} else {
-									console.log(`The player bar is visible. Create button`);
-									createButton();
-								}
-							} else {
-								console.log("<ytmusic-player-bar> not found in the DOM.");
-							}
-						}
-					}
-				},
-			);
-
-			// 3. Configure the observer
-			// We want to observe attribute changes
-			const config = { attributes: true };
-
-			// 4. Start observing the target element
-			playerBarObserver.observe(playerBar, config);
-
-			console.log(
-				"Monitoring of <ytmusic-player-bar> for the 'player-page-open' attribute started.",
-			);
-
-			// Optional: If you want to stop observing at a certain point
-			// playerBarObserver.disconnect();
-		} else {
-			console.warn(
-				"The <ytmusic-player-bar> element was not found in the DOM.",
-			);
 		}
 	}
 
@@ -173,7 +85,6 @@
 
 	// Function to open the URL ytdl:
 	function openYtdlURL(type, quality = "") {
-		CheckFirstTime();
 		URL = window.location.href;
 		console.log("URL: ", URL);
 
@@ -212,11 +123,6 @@
 		// This should trigger the ytdl: protocol handler if installed properly on the OS
 		window.location.href = ytdlURL;
 		console.info(`Try to open URL : ${ytdlURL}`);
-
-		// Auto close the opened tab after a delay
-		setTimeout(() => {
-			tab.close();
-		}, closeDelay); // Adjut this variable (in milliseconds) where it is delcared if necessary
 
 		GM_notification({
 			text: `Type: ${type}\nQuality: ${quality}`,
@@ -276,17 +182,6 @@
 		title: "Shortkey: F. Show URL details in terminal.",
 	});
 
-	GM_registerMenuCommand(
-		"Reset first time value",
-		() => {
-			GM_setValue("first-time", true);
-			console.log(`Set first-time value to true`);
-		},
-		{
-			title: "The opened ytdl: tab will stay open longer",
-		},
-	);
-
 	/**==========================================================================
   * ℹ		CREATE BUTTON on YouTube
   ===========================================================================*/
@@ -327,7 +222,7 @@
 				isMusic = true;
 			}
 
-			console.log(`url: ${URL}`);
+			console.log(`with url: ${URL}`);
 			console.log(`isYouTube: ${isYoutube}, isMusic: ${isMusic}`);
 
 			if (!isYoutube && !isMusic) {
