@@ -17,26 +17,47 @@ $ErrorActionPreference = 'Stop'
 <#*==========================================================================
 * ℹ                   DEFAULT VARIABLES
 ===========================================================================#>
+
+# This folder name must exist as a child in the user downloads directory defined by the OS
+New-Variable -Name DownloadFolderName -Value "yt-dlp" -Option Constant
+
+# Don’t edit this part unless you know what you do.
+# Get default downloads dir for each platform
+if ($PSVersionTable.Platform -eq "Win32NT") {
+  New-Variable -Name UserShellFolders -Value "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Option Constant
+  New-Variable -Name downloadsKey -Value "{374DE290-123F-4565-9164-39C4925E467B}" -Option Constant
+  New-Variable -Name downloadsPath -Value ((Get-ItemProperty -Path $UserShellFolders -Name $downloadsKey).$downloadsKey) -Option Constant
+}
+elseif ($PSVersionTable.Platform -eq "Unix") {
+  New-Variable -Name downloadsPath -Value (Join-Path -Path $HOME -ChildPath "Downloads") -Option Constant
+}
+else {
+  TerminateWithError -errorMessage "Unknown OS"
+}
+
+#===========================================================================
+# you can edit those values
+New-Variable -Name UI_Path -Value "D:/Programmes/Internet/youtube-dl/YDL-UI_Portable/YDL-UI.exe" -Option Constant
+New-Variable -Name myCookies -Value "D:/Programmes/Internet/youtube-dl/cookies.txt" -Option Constant
+
+New-Variable -Name directory -Value (Join-Path -Path "$downloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
 New-Variable -Name format -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/best" -Option Constant
-New-Variable -Name directory -Value "E:/OneDrive/Téléchargements/yt-dlp" -Option Constant
-New-Variable -Name templateNameChannel -Value "%(uploader|)s%(uploader& - )s%(title).70s.%(ext)s"
-New-Variable -Name templateNameTitle -Value "%(title).70s.%(ext)s"
+New-Variable -Name templateNameChannel -Value "%(uploader|)s%(uploader& - )s%(title).70s.%(ext)s" -Option Constant
+New-Variable -Name templateNameTitle -Value "%(title).70s.%(ext)s" -Option Constant
 # if useTitle is true then use $templateNameTitle else $templateNameChannel
-New-Variable -Name useTitle -Value $true
-New-Variable -Name myCookies -Value "D:/Programmes/Internet/youtube-dl/cookies.txt"
+New-Variable -Name useTitle -Value $true -Option Constant
 # defaut quality for video (make it compatible to upload on 𝕏)
-New-Variable -Name videoQuality -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio"
+New-Variable -Name videoQuality -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio" -Option Constant
 # Videos will use this container
-New-Variable -Name videoContainer -Value "mp4"
-New-Variable -Name UI_Path -Value "D:/Programmes/Internet/youtube-dl/YDL-UI_Portable/YDL-UI.exe"
+New-Variable -Name videoContainer -Value "mp4" -Option Constant
 # set URLs for which the script will detect as audio
-New-Variable -Name autoAudio -Value @("https://music.youtube.com/watch?v=")
+New-Variable -Name autoAudio -Value @("https://music.youtube.com/watch?v=") -Option Constant
 
 # This is the command triggered by the protocol
 # It open the Windows Terminal with the profile 'PowerShell 7' and this script with the given url
 New-Variable -Name command -Value "cmd.exe /c wt.exe -p ""PowerShell 7"" -- pwsh.exe -NoExit -File ""$PSCommandPath"" -url ""%1"""
 
-# ⚠	NON RECOMMENDED
+# ⚠	NOT RECOMMENDED
 # If for some reason, you would want to change the protocol name.
 # But you will also have to change the userscript run by your browser.
 New-Variable -Name protocol -Value "ytdl"
@@ -51,10 +72,13 @@ New-Variable -Name repo -Value "https://github.com/Fred-Vatin/run-yt-dlp-from-br
 function Show-Help {
   Write-Host "ℹ`tPARAMETERS" -ForegroundColor Magenta
   Write-Host "========================`n" -ForegroundColor Magenta
+  Write-Host "-help" -ForegroundColor Magenta
+  Write-Host "`tOpen this help (default)`n"
   Write-Host "-man" -ForegroundColor Magenta
   Write-Host "`tUse this to open wiki at `"$repo`"`n"
-  Write-Host "-install (default)" -ForegroundColor Magenta
+  Write-Host "-install" -ForegroundColor Magenta
   Write-Host "`tUse this to register the custom protocol `"$protocol`://`" in the registry that will run this script with the parameter -url when called`n"
+  Write-Host "`tThe downloads directory will be `"$directory`" and must exist. Edit this script to customize.`n"
   Write-Host "-uninstall" -ForegroundColor Magenta
   Write-Host "`tUse this to unregister the custom protocol `"$protocol`://`" from the registry`n"
   Write-Host "-url" -ForegroundColor Magenta
@@ -76,6 +100,16 @@ function Show-Help {
   Write-Host "`t`t`"directory/path`"`n`t`t`tif not set in the -url, use the one set in this script"
   Write-Host "`n`t- url [string] (required)" -ForegroundColor Cyan
   Write-Host "`t`t`"url`"`tto download"
+  Write-Host "`nℹ`tDefault Paths" -ForegroundColor Magenta
+  Write-Host "========================`n" -ForegroundColor Magenta
+  Write-Host "Edit this script to customize those paths."
+  Write-Host "`"/`" as separator works also in Windows.`n"
+  Write-Host "directory" -ForegroundColor Magenta
+  Write-Host "`t$directory`n"
+  Write-Host "UI_Path" -ForegroundColor Magenta
+  Write-Host "`t$UI_Path`n"
+  Write-Host "myCookies" -ForegroundColor Magenta
+  Write-Host "`t$myCookies`n"
 }
 
 function TerminateWithError {
@@ -156,7 +190,7 @@ Clear-Host
 * ℹ		HANDLE HELP PARAMETER
 ===========================================================================#>
 
-if ($help) {
+if ((-not $install -and -not $uninstall -and -not $man -and -not $url) -or ($help)) {
   Show-Help
   exit
 }
@@ -471,7 +505,7 @@ if ($uninstall) {
 * ℹ		HANDLE INSTALL PARAMETERS
 ===========================================================================#>
 
-else {
+if ($install) {
   WriteTitle "INSTALL"
   Write-Host "Installing ytdl protocol handler...`n"
 
