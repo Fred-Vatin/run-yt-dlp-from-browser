@@ -354,7 +354,7 @@ if ($url -and -not $install -and -not $uninstall) {
         # When QUALITY is an empty string, download the best audio
         $global:options = @(
           "--extract-audio",
-          "-o", $output,
+          "-o", "$output",
           $DL_URL
         )
       }
@@ -363,7 +363,7 @@ if ($url -and -not $install -and -not $uninstall) {
           "--extract-audio",
           "--audio-format", "mp3",
           "--audio-quality", "0",
-          "-o", $output,
+          "-o", "$output",
           "-f", "bestaudio[ext=mp3]/bestaudio/bestvideo+bestaudio",
           $DL_URL
         )
@@ -371,7 +371,7 @@ if ($url -and -not $install -and -not $uninstall) {
       else {
         $global:options = @(
           "--extract-audio",
-          "-o", $output,
+          "-o", "$output",
           "-f", "bestaudio[ext=$QUALITY]/bestaudio/bestvideo+bestaudio",
           $DL_URL
         )
@@ -391,7 +391,7 @@ if ($url -and -not $install -and -not $uninstall) {
       $global:options = @(
         "-f", $videoQuality,
         "--merge-output-format", $videoContainer,
-        "-o", $output,
+        "-o", "$output",
         $DL_URL
       )
     }
