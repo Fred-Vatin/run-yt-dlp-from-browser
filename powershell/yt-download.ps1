@@ -55,7 +55,7 @@ New-Variable -Name autoAudio -Value @("https://music.youtube.com/watch?v=") -Opt
 
 # This is the command triggered by the protocol
 # It open the Windows Terminal with the profile 'PowerShell 7' and this script with the given url
-New-Variable -Name command -Value "cmd.exe /c wt.exe -p ""PowerShell 7"" -- pwsh.exe -NoExit -File ""$PSCommandPath"" -url ""%1"""
+New-Variable -Name command -Value "cmd.exe /c pwsh.exe -ExecutionPolicy Bypass -NoExit -File ""$PSCommandPath"" -url ""%1"""
 
 # ⚠	NOT RECOMMENDED
 # If for some reason, you would want to change the protocol name.
