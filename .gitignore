@@ -136,3 +136,4 @@ dist
 
 user script/.vscode/bookmarks.json
 .vscode/bookmarks.json
+user script/bun.lock
