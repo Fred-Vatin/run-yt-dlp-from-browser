@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.29
+// @version      1.0.30
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
@@ -107,11 +107,11 @@
 
     // Array to collect query parameters
     const params = [];
-    if (quality) params.push(`quality=${quality}`);
-    if (DOWNLOAD_DIR) params.push(`dldir=${DOWNLOAD_DIR}`);
+    if (quality) params.push(`&quality=${quality}`);
+    if (DOWNLOAD_DIR) params.push(`&dldir=${DOWNLOAD_DIR}`);
 
     // Join parameters with '&' and append to URL
-    ytdlURL += params.join("&");
+    ytdlURL += params.join("");
     ytdlURL += `&url=${URL}`;
 
     // This should trigger the ytdl: protocol handler if installed properly on the OS
