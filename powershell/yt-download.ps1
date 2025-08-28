@@ -47,7 +47,7 @@ New-Variable -Name templateNameTitle -Value "%(title).70s.%(ext)s" -Option Const
 # if useTitle is true then use $templateNameTitle else $templateNameChannel
 New-Variable -Name useTitle -Value $true -Option Constant
 # defaut quality for video (make it compatible to upload on 𝕏)
-New-Variable -Name videoQuality -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio" -Option Constant
+New-Variable -Name videoQuality -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio"
 # Videos will use this container
 New-Variable -Name videoContainer -Value "mp4" -Option Constant
 # set URLs for which the script will detect as audio
@@ -85,17 +85,18 @@ function Show-Help {
   Write-Host "`tThis url is parsed and can contain those parameters:"
   Write-Host "`n`t- type [string] (required)" -ForegroundColor Cyan
   Write-Host "`t`t`"auto`"`n`t`t`tif the url to download is detected as audio, download best audio"
-  Write-Host "`t`t`tif not, download the url using best video"
+  Write-Host "`t`t`tif not, download the url using best compatible video+audio"
   Write-Host "`n`t`t`"audio`"`n`t`t`tdownload audio stream only or extract audio"
-  Write-Host "`n`t`t`"video`"`n`t`t`tdownload video+audio stream as mp4 using `$videoQuality"
+  Write-Host "`n`t`t`"video`"`n`t`t`tdownload video stream as mp4 using `"quality`""
   Write-Host "`n`t`t`"test`"`n`t`t`tdisplay all available formats for the url and its title"
-  Write-Host "`n`t`t`"showUI`"`n`t`t`tif YDL-UI.exe is installed and path set in this script, send url to it."
+  Write-Host "`n`t`t`"showUI`"`n`t`t`tif YDL-UI.exe is installed and path set in this script, send url to it"
   Write-Host "`t`t`tRequires https://github.com/Maxstupo/ydl-ui/"
   Write-Host "`n`tquality [string] (optional)" -ForegroundColor Cyan
-  Write-Host "`t`t`"`"`n`t`t`tdefault is empty and download the best quality audio and video"
-  Write-Host "`n`t`t`"1080`", `"720`", etc.`n`t`t`tuse any height you want. It will try to download this video quality if exist or the next one below."
+  Write-Host "`t`t`"`"`n`t`t`tdefault is empty and download the best compatible audio and video, not always the best"
+  Write-Host "`n`t`t`"best`"`n`t`t`tif type is video try to download the best streams available, no matter what their format are"
+  Write-Host "`n`t`t`"1080`", `"720`", etc.`n`t`t`tuse any height you want. It will try to download this video quality if exist or the next one below"
   Write-Host "`n`t`t`"forceMp3`"`n`t`t`tif type is audio, download mp3 stream if exists or convert to mp3"
-  Write-Host "`n`t`t`"best, aac, m4a, mp3, opus, vorbis, wav`"`n`t`t`ttry to download this quality in priority, else find the other best audio stream."
+  Write-Host "`n`t`t`"best, aac, m4a, mp3, opus, vorbis, wav`"`n`t`t`tif type is audio, use the given quality in priority, else find the other best audio stream"
   Write-Host "`n`t- dldir [string] (optional)" -ForegroundColor Cyan
   Write-Host "`t`t`"directory/path`"`n`t`t`tif not set in the -url, use the one set in this script"
   Write-Host "`n`t- url [string] (required)" -ForegroundColor Cyan
@@ -381,7 +382,7 @@ if ($url -and -not $install -and -not $uninstall) {
 
       if ($QUALITY) {
         if ($QUALITY -ieq "best") {
-          $videoQuality = "bestvideo+bestaudio/bestvideo[height<=$QUALITY]+bestaudio"
+          $videoQuality = "bestvideo+bestaudio"
         }
         else {
           $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio"
