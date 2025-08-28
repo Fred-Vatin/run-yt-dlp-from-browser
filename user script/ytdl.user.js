@@ -156,6 +156,10 @@
     title: "Download at 1080p max if possible",
   });
 
+  GM_registerMenuCommand("Download Best Video", () => openYtdlURL("video", "best"), {
+    title: "Download the best streams it founds",
+  });
+
   GM_registerMenuCommand("Download with YDL-UI", () => openYtdlURL("showUI"), {
     accessKey: "u",
     title: "Shortkey: U. Download with YDL-UI.exe if installed",

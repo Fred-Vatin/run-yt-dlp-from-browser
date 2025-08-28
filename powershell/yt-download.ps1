@@ -380,7 +380,12 @@ if ($url -and -not $install -and -not $uninstall) {
       Write-Host "- Mode : video" -ForegroundColor Green
 
       if ($QUALITY) {
-        $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio"
+        if ($QUALITY -ieq "best") {
+          $videoQuality = "bestvideo+bestaudio/bestvideo[height<=$QUALITY]+bestaudio"
+        }
+        else {
+          $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio"
+        }
       }
       $global:options = @(
         "-f", $videoQuality,
