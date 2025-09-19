@@ -8,9 +8,15 @@ Check the [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to 
 
 ## Screenshots
 
+One click button on youtube
+
 <img alt="image" src="https://github.com/user-attachments/assets/905a403c-ecbc-4521-bafb-ea58c22710b7" />
 
+Menu for other formats and sites
+
 <img alt="image" src="https://github.com/user-attachments/assets/bed1fa17-9624-4fe1-9321-4745063a38ce" />
+
+Detailed output of the download job
 
 <img alt="image" src="https://github.com/user-attachments/assets/1c204747-c193-4620-9df7-8147eb1d21c7" />
 
