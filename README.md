@@ -2,7 +2,7 @@
 
 **This PC tool will allow you to download any video or music from your browser in one click using yt-dlp.**
 
-This project contains a userscript (`user script/ytdl.user.js`) that allows you to run yt-dlp directly from your browser using [Tampermonkey](https://www.tampermonkey.net/) or other extensions for userscripts.
+This project contains a userscript `user script/ytdl.user.js` that allows you to run a powershell script `yt-download.ps1` that runs yt-dlp directly from your browser using [Tampermonkey](https://www.tampermonkey.net/) or other extensions for userscripts.
 
 Check the [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to learn how to install and use it.
 
