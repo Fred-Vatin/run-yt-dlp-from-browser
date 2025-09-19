@@ -38,7 +38,7 @@ else {
 #===========================================================================
 # you can edit those values
 New-Variable -Name UI_Path -Value "D:/Programmes/Internet/youtube-dl/YDL-UI_Portable/YDL-UI.exe" -Option Constant
-New-Variable -Name myCookies -Value "D:/Programmes/Internet/youtube-dl/cookies.txt" -Option Constant
+New-Variable -Name myCookies -Value "D:\OneDrive\Backup\Internet\youtube-dl\cookies.txt" -Option Constant
 
 New-Variable -Name directory -Value (Join-Path -Path "$downloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
 New-Variable -Name format -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/best" -Option Constant
