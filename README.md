@@ -56,3 +56,7 @@ To install the test protocol userscript in [Tampermonkey](https://www.tampermonk
 [![Install Userscript](https://img.shields.io/badge/Install_Userscript-test-blue?style=for-the-badge)](https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/test-protocol.user.js)
 
 Read [how to reach help](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/Trouble-shooting).
+
+---
+
+[![BUY ME A COFFEE](https://img.shields.io/badge/BUY%20ME%20A%20COFFEE-ffffff?logo=buymeacoffee&style=for-the-badge&color=710067&logoColor=ffe071)](https://github.com/sponsors/Fred-Vatin)
