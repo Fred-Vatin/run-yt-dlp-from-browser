@@ -1,42 +1,35 @@
-Todo:
-
-- [ ] wiki
-
 # Run yt-dlp commands from browser
 
 This project contains a userscript (`user script/ytdl.user.js`) that allows you to run yt-dlp directly from your browser using [Tampermonkey](https://www.tampermonkey.net/) or other extensions for userscripts.
 
-To enable your operating system (currently Windows only, but pull requests are welcome) to interpret data sent by the userscript, download the [powershell directory](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/tree/main/powershell). More details will be provided in the wiki.
+Check the [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to learn how to install and use it.
 
-## Requirements
+## Screenshots
 
-_See wiki if you don’t know how to install and apply the requirements._
+<img alt="image" src="https://github.com/user-attachments/assets/905a403c-ecbc-4521-bafb-ea58c22710b7" />
+
+<img alt="image" src="https://github.com/user-attachments/assets/bed1fa17-9624-4fe1-9321-4745063a38ce" />
+
+<img alt="image" src="https://github.com/user-attachments/assets/1c204747-c193-4620-9df7-8147eb1d21c7" />
+
+
+## Prerequisites
+
+_See [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to know how to install and apply the prerequisites._
 
 - `yt-dlp` and `ffmpeg` commands must be accessible in your `PATH`
 - your browser needs the extension [Tampermonkey](https://www.tampermonkey.net/) to be installed
 - your Windows user account must be allowed to run powershell script `.ps1`
-- [Powershell 7](https://github.com/PowerShell/PowerShell) (strongly recommend to use winget to install it)
-- (optional) by default it uses [Windows Terminal](https://apps.microsoft.com/detail/9n0dx20hk701) to run the powershell script that runs the `yt-dlp` command
-
-## Installation
-
-### Script for browser
-
-To install the userscript in [Tampermonkey](https://www.tampermonkey.net/), click below:
-
-[![Install Userscript](https://img.shields.io/badge/Install_Userscript-yt--dlp-blue?style=for-the-badge)](https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/ytdl.user.js)
-
-1. _Ensure the Tampermonkey extension is installed in your browser._
-2. _Click the link above._
-3. _Tampermonkey will automatically detect the script and prompt you to install it. Click "Install" in the Tampermonkey window._
-
-### Script for Windows
-
-- [ ] todo
+- [Powershell 7](https://github.com/PowerShell/PowerShell)
 
 ## Automatic Updates
 
 The user script is configured to automatically check for updates. If a new version is available in this GitHub repository, Tampermonkey will update it unless you modified it.
+
+But the powershell script won’t auto update. So watch the release to know when there is a new version with fixes or new features.
+
+<img width="463" height="470" alt="image" src="https://github.com/user-attachments/assets/227caa77-15b7-4560-b804-d9930fa4559f" />
+<img width="616" height="452" alt="image" src="https://github.com/user-attachments/assets/a0f43c4b-25ae-4aad-8fe2-a5a0531b6934" />
 
 ---
 
@@ -44,10 +37,14 @@ The user script is configured to automatically check for updates. If a new versi
 
 Once you read the wiki to understand how it works, you understand how easy it is to use this concept to run any OS commands from a browser.
 
-Just fork this repository and enjoy !
+Just [fork this repository](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/Make-your-own-command-handler) and enjoy !
 
 # Trouble shooting
+
+Just for debug purpose, there is a userscript to test the protocol handler in your browser.
 
 To install the test protocol userscript in [Tampermonkey](https://www.tampermonkey.net/), click below:
 
 [![Install Userscript](https://img.shields.io/badge/Install_Userscript-test-blue?style=for-the-badge)](https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/test-protocol.user.js)
+
+Read [how to reach help](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/Trouble-shooting).
