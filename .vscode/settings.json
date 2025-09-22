@@ -9,5 +9,10 @@
 		"darwin-arm64": "./user script/node_modules/@biomejs/biome/bin/biome",
 
 		"win32-x64": "./user script/node_modules/@biomejs/cli-win32-x64/biome.exe"
+	},
+	"powershell.debugging.createTemporaryIntegratedConsole": true,
+	"powershell.debugging.executeMode": "Call",
+	"[markdown]": {
+		"editor.formatOnSave": false
 	}
 }

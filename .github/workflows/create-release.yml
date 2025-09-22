@@ -1,0 +1,117 @@
+name: Create Release
+
+on:
+  workflow_dispatch: # allow manual run
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  CONFIG_FILE_PATH: Repo/release-please-config.json
+  MANIFEST_FILE_PATH: Repo/.release-please-manifest.json
+  RELEASE_NOTES_PATH: Repo/release-notes.md
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+
+    outputs:
+      release--tag_name: ${{ steps.release.outputs.tag_name }}
+      release--releases_created: ${{ steps.release.outputs.releases_created }}
+      release--prs_createde: ${{ steps.release.outputs.prs_created }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Starting log
+        run: |
+          echo "🐧 This job is running on a ${{ runner.os }} server hosted by GitHub!"
+          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+          echo "📰 This job is triggered by this event: ${{ github.event_name }}"
+
+      - name: Check working directory
+        run: |
+          pwd
+          if [ -d "Repo" ]; then
+            echo "/Repo content:"
+            ls -la Repo
+          else
+            echo "/Repo sub-dir doesn’t exist. Show root:"
+            ls -la
+          fi
+
+      - name: Check config file
+        run: |
+          cat $CONFIG_FILE_PATH || echo "'release-please-config.json' not found"
+          cat $MANIFEST_FILE_PATH || echo "'.release-please-manifest.json' not found"
+
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: ${{ env.CONFIG_FILE_PATH }}
+          manifest-file: ${{ env.MANIFEST_FILE_PATH }}
+
+      - name: Print release outputs for debugging
+        run: |
+          echo "Release outputs:"
+          echo "RELEASE CREATED: ${{ steps.release.outputs.releases_created }}" | tee -a $GITHUB_STEP_SUMMARY
+          echo "PR CREATED/UPDATED: ${{ steps.release.outputs.prs_created }}" | tee -a $GITHUB_STEP_SUMMARY
+
+      - name: Status
+        run: echo "🍏 This job's status is ${{ job.status }}."
+
+  release-zip:
+    if: ${{ needs.release-please.outputs.release--releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    needs: release-please
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Starting log
+        run: |
+          echo "🐧 This job is running on a ${{ runner.os }} server hosted by GitHub!"
+          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+          echo "📰 This job is triggered by this event: ${{ github.event_name }}"
+
+      - name: Print release outputs for debugging
+        run: |
+          echo "Release outputs:"
+          echo "RELEASE CREATED: ${{ needs.release-please.outputs.release--releases_created }}" | tee -a $GITHUB_STEP_SUMMARY
+          echo "PR CREATED/UPDATED: ${{ needs.release-please.outputs.release--prs_createde }}" | tee -a $GITHUB_STEP_SUMMARY
+
+      - name: Create ZIP archive
+        run: |
+          zip -r yt-download-${{ needs.release-please.outputs.release--tag_name }}.zip powershell/*.ps1 2>/dev/null || true
+
+      - name: Upload ZIP to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ needs.release-please.outputs.release--tag_name }} ./yt-download-${{ needs.release-please.outputs.release--tag_name }}.zip --clobber
+
+      # - name: Get release-notes
+      #   id: get-notes
+      #   run: |
+      #     echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+      #     cat ${{ env.RELEASE_NOTES_PATH }} >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Concatenate release-notes
+        id: edit-notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit ${{ needs.release-please.outputs.release--tag_name }} --notes "$(gh release view ${{ needs.release-please.outputs.release--tag_name }} --json body --jq '.body') $(cat ${{ env.RELEASE_NOTES_PATH }})"
+
+      - name: Status
+        run: echo "🍏 This job's status is ${{ job.status }}."

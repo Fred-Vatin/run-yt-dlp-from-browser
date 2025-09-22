@@ -1,0 +1,49 @@
+# https://github.com/Nats-ji/delete-old-releases
+name: Delete old releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "Keep latest X releases"
+        required: true
+        type: number
+        default: 1
+      keepMinor:
+        description: "Keep the latest release of each older minor versions."
+        required: true
+        type: boolean
+        default: false
+      minorCount:
+        description: "Number of old releases in each minor version to keep."
+        required: true
+        type: number
+        default: 1
+      minorType:
+        description: "Which semver level should we use to keep old release"
+        required: true
+        type: choice
+        default: "major"
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Starting log
+        run: |
+          echo "🐧 This job is running on a ${{ runner.os }} server hosted by GitHub!"
+          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+          echo "📰 This job is triggered by this event: ${{ github.event_name }}"
+      - uses: actions/checkout@v3
+      - uses: Nats-ji/delete-old-releases@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          keep-count: ${{ inputs.count }}
+          keep-old-minor-releases: ${{ inputs.keepMinor }}
+          keep-old-minor-releases-count: ${{ inputs.minorCount }}
+          keep-old-minor-releases-by: ${{ inputs.minorType }}
+      - run: echo "🍏 This job's status is ${{ job.status }}."

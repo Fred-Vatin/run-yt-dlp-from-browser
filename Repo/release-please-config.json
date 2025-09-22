@@ -1,0 +1,99 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"include-component-in-tag": false,
+	"include-v-in-tag": true,
+	"pull-request-header": "🤖 release please",
+	"pull-request-footer": " ",
+	"packages": {
+		".": {
+			"package-name": "yt-download",
+			"changelog-path": "Repo/CHANGELOG.md",
+			"changelog-sections": [
+				{
+					"type": "build",
+					"hidden": false,
+					"section": "🧰 Other"
+				},
+				{
+					"type": "change",
+					"hidden": false,
+					"section": "🚀 Features"
+				},
+				{
+					"type": "chore",
+					"hidden": true,
+					"section": "🧰 Other"
+				},
+				{
+					"type": "ci",
+					"hidden": true,
+					"section": "🧰 Other"
+				},
+				{
+					"type": "deprecate",
+					"hidden": false,
+					"section": "⚠️ Changes"
+				},
+				{
+					"type": "deps",
+					"hidden": true,
+					"section": "🧰 Other"
+				},
+				{
+					"type": "docs",
+					"hidden": false,
+					"section": "📚 Documentation"
+				},
+				{
+					"type": "feat",
+					"hidden": false,
+					"section": "🚀 Features"
+				},
+				{
+					"type": "fix",
+					"hidden": false,
+					"section": "🐞 Bug Fixes"
+				},
+				{
+					"type": "perf",
+					"hidden": false,
+					"section": "✨ Polish"
+				},
+				{
+					"type": "refactor",
+					"hidden": false,
+					"section": "✨ Polish"
+				},
+				{
+					"type": "remove",
+					"hidden": false,
+					"section": "⚠️ Changes"
+				},
+				{
+					"type": "revert",
+					"hidden": false,
+					"section": "🐞 Bug Fixes"
+				},
+				{
+					"type": "security",
+					"hidden": false,
+					"section": "🐞 Bug Fixes"
+				},
+				{
+					"type": "style",
+					"hidden": false,
+					"section": "✨ Polish"
+				},
+				{
+					"type": "test",
+					"hidden": false,
+					"section": "🧪 Tests"
+				}
+			]
+		}
+	},
+	"release-type": "simple",
+	"separate-pull-requests": true,
+	"always-update": true,
+	"tag-separator": "@"
+}
