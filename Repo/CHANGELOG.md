@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v1.0.0...v1.0.1) (2025-10-09)
+
+
+### 🐞 Bug Fixes
+
+* check ffmpeg installation ([4e77466](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/4e77466e59234212085acb73e3a8d5861760e560))
+
 ## [1.0.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v0.1.0...v1.0.0) (2025-09-22)
 
 
