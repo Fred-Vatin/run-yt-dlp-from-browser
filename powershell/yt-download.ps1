@@ -160,7 +160,7 @@ function Test-AdminPrivileges {
 
 function Test-YtdlInstallation {
   if (-not (Get-Command yt-dlp -ErrorAction SilentlyContinue)) {
-    TerminateWithError -errorMessage "yt-dlp is not installed globally on the system. Install it or add it to the PATH."
+    TerminateWithError -errorMessage "yt-dlp is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command"
   }
 }
 
@@ -182,6 +182,11 @@ function Get-YtdlPath {
 
 }
 
+function Test-FFmpegInstallation {
+  if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    TerminateWithError -errorMessage "FFmpeg is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command."
+  }
+}
 <#*==========================================================================
 * ℹ            GET PARAMETERS
 ===========================================================================#>
@@ -276,6 +281,12 @@ if ($url -and -not $install -and -not $uninstall) {
   WriteTitle "DOWNLOAD WITH YT-DLP"
 
   Test-YtdlInstallation
+
+  <#*==========================================================================
+  * ℹ		CHECK FFMPEG INSTALLATION
+  ===========================================================================#>
+
+  Test-FFmpegInstallation
 
   <#*==========================================================================
   * ℹ		TEST URL to download
