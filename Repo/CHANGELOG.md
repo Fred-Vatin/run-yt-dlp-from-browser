@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v1.0.1...v1.1.0) (2025-10-10)
+
+
+### 🚀 Features
+
+* script active on all sites ([7e5927e](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/7e5927e56071fe7b5a56f391026b5a40de926633))
+
 ## [1.0.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v1.0.0...v1.0.1) (2025-10-09)
 
 
