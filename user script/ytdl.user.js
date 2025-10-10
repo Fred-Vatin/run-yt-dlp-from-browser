@@ -1,20 +1,14 @@
 // ==UserScript==
 // @name         yt-dlp
 // @namespace    fred.vatin.yt-dlp.us
-// @version      1.0.30
+// @version      1.0.31
 // @description  Run local script to run yt-dlp commands
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @author       Fred Vatin
 // @updateURL    https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/ytdl.user.js
 // @downloadURL  https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/ytdl.user.js
 // @noframes
-// @match        *://*.youtube.com/*
-// @match        *://*.x.com/*
-// @match        *://*.instagram.com/*
-// @match        *://*.reddit.com/*
-// @match        *://*.twitch.tv/*
-// @match        *://rutube.ru/*
-// @match        *://*.canalplus.com/*
+// @include      *
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_notification
