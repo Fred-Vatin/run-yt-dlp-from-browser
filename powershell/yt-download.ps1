@@ -3,7 +3,8 @@ param(
   [switch]$uninstall,
   [switch]$help,
   [switch]$man,
-  [string]$url
+  [string]$url,
+  [switch]$debug
 )
 
 # Stop the script if an error occurs.
@@ -218,6 +219,11 @@ if ($url -and -not $install -and -not $uninstall) {
   Write-Host "`t$url`n"
 
   try {
+
+    # If you call the script with -url only, create default command
+    if ($url.StartsWith("https://")) {
+      $url = "ytdl:?type=auto&url=$url"
+    }
 
     # Extract parts after ytdl:?
     if ($url.StartsWith("${protocol}:?")) {
@@ -450,13 +456,28 @@ if ($url -and -not $install -and -not $uninstall) {
   ===========================================================================#>
   Write-Host "`nCOMMAND:" -ForegroundColor Cyan
 
+
+  # To display to correct command so it can copied by user and used elsewhere
+  # we need to quote the output directory
+  $pattern = '-o\s+(.+?)\s+http'
+  $substitution = '-o "$1" http'
+
+  $optionsString = $options -join ' '
+
+  $optionsString = $optionsString -replace $pattern, $substitution
+
+  if ($debug) {
+    Write-Host "`$options: $options`n" -ForegroundColor Cyan
+    Write-Host "`$optionsString: $optionsString`n" -ForegroundColor Yellow
+  }
+
   if ($myCookies) {
-    Write-Host "yt-dlp $options --cookies `"$myCookies`"`n" -ForegroundColor Magenta
+    Write-Host "yt-dlp $optionsString --cookies `"$myCookies`"`n" -ForegroundColor Magenta
     Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
     & yt-dlp $options --cookies "$myCookies"
   }
   else {
-    Write-Host "yt-dlp $options`n" -ForegroundColor Magenta
+    Write-Host "yt-dlp $optionsString`n" -ForegroundColor Magenta
     Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
     & yt-dlp $options
   }
