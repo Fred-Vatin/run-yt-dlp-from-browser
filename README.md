@@ -34,10 +34,15 @@ _See [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to know 
 
 The user script is configured to automatically check for updates. If a new version is available in this GitHub repository, Tampermonkey will update it unless you modified it.
 
-But the powershell script won’t auto update. So watch the release to know when there is a new version with fixes or new features.
+But the powershell script won’t auto update. So watch the release to know when there is a new version with fixes or new features. And star ⭐ to easily find this page again in the future.
 
-<img width="463" height="470" alt="image" src="https://github.com/user-attachments/assets/227caa77-15b7-4560-b804-d9930fa4559f" />
-<img width="616" height="452" alt="image" src="https://github.com/user-attachments/assets/a0f43c4b-25ae-4aad-8fe2-a5a0531b6934" />
+<img width="350" alt="image" src="https://github.com/user-attachments/assets/227caa77-15b7-4560-b804-d9930fa4559f" />
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/a0f43c4b-25ae-4aad-8fe2-a5a0531b6934" />
+
+## CONTRIBUTE
+
+- If you are sure you found a bug, open an [issue](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/issues)
+- If you want to ask something, get help, talk and share something with others about this user script, open a [discussion](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/discussions)
 
 ---
 
@@ -56,6 +61,14 @@ To install the test protocol userscript in [Tampermonkey](https://www.tampermonk
 [![Install Userscript](https://img.shields.io/badge/Install_Userscript-test-blue?style=for-the-badge)](https://raw.githubusercontent.com/Fred-Vatin/run-yt-dlp-from-browser/main/user%20script/test-protocol.user.js)
 
 Read [how to reach help](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/Trouble-shooting).
+
+---
+
+# OTHER SCRIPTS
+
+You might be interested by…
+
+[![Userscript](https://img.shields.io/badge/Userscript-Youtube_%3A_Filter_the_%E2%80%9CSave_to_Playlist%E2%80%9D_Menu-blue?style=for-the-badge)](https://github.com/Fred-Vatin/yt-playlist-filter)
 
 ---
 

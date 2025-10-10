@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v1.1.0...v1.2.0) (2025-10-10)
+
+
+### 🚀 Features
+
+* ps1 script allowed to be called manually with a simple url ([0b777b5](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/0b777b56905f661eccc452b2f0a9f387e5f58026))
+
 ## [1.1.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v1.0.1...v1.1.0) (2025-10-10)
 
 
