@@ -53,6 +53,9 @@ New-Variable -Name videoQuality -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4
 New-Variable -Name videoContainer -Value "mp4" -Option Constant
 # set URLs for which the script will detect as audio
 New-Variable -Name autoAudio -Value @("https://music.youtube.com/watch?v=") -Option Constant
+# set default js runtime required in the new yt-dlp versions. Just comment if using Deno.
+New-Variable -Name jsRuntime -Value "bun" -Option Constant
+
 
 # This is the command triggered by the protocol
 # It open the Windows Terminal with the profile 'PowerShell 7' and this script with the given url
@@ -457,30 +460,38 @@ if ($url -and -not $install -and -not $uninstall) {
   Write-Host "`nCOMMAND:" -ForegroundColor Cyan
 
 
-  # To display to correct command so it can copied by user and used elsewhere
+  # To display the correct command so it can be copied by user and used elsewhere
   # we need to quote the output directory
   $pattern = '-o\s+(.+?)\s+http'
   $substitution = '-o "$1" http'
 
+  if ($myCookies) {
+    $options += @("--cookies", "$myCookies")
+  }
+
+  if ($jsRuntime) {
+    $options += @("--js-runtimes", $jsRuntime)
+  }
+
   $optionsString = $options -join ' '
 
   $optionsString = $optionsString -replace $pattern, $substitution
+
+  if ($myCookies) {
+    $pattern = '--cookies\s+(.+?\.txt)'
+    $substitution = '--cookies "$1"'
+    $optionsString = $optionsString -replace $pattern, $substitution
+  }
 
   if ($debug) {
     Write-Host "`$options: $options`n" -ForegroundColor Cyan
     Write-Host "`$optionsString: $optionsString`n" -ForegroundColor Yellow
   }
 
-  if ($myCookies) {
-    Write-Host "yt-dlp $optionsString --cookies `"$myCookies`"`n" -ForegroundColor Magenta
-    Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
-    & yt-dlp $options --cookies "$myCookies"
-  }
-  else {
-    Write-Host "yt-dlp $optionsString`n" -ForegroundColor Magenta
-    Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
-    & yt-dlp $options
-  }
+  Write-Host "yt-dlp $optionsString`n" -ForegroundColor Magenta
+  Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
+  & yt-dlp $options
+
 
   <#*==========================================================================
   * ℹ		OPEN DOWNLOAD DIR
