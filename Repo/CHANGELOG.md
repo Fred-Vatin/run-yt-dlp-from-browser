@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.0.0...v2.0.1) (2025-12-16)
+
+
+### 🐞 Bug Fixes
+
+* fallback to best to avoid failure ([9f7f6ff](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/9f7f6ff87dcdf86df541e2cbc51d0c8fe583a3f0)), closes [#9](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/issues/9)
+
 ## [2.0.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v1.2.0...v2.0.0) (2025-11-12)
 
 
