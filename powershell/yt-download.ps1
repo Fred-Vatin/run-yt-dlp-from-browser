@@ -402,10 +402,10 @@ if ($url -and -not $install -and -not $uninstall) {
 
       if ($QUALITY) {
         if ($QUALITY -ieq "best") {
-          $videoQuality = "bestvideo+bestaudio"
+          $videoQuality = "bestvideo+bestaudio/best"
         }
         else {
-          $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio"
+          $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio/best"
         }
       }
       $global:options = @(
