@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.0.1...v2.1.0) (2026-01-02)
+
+
+### 🚀 Features
+
+* add send command to clipboard ([b9a586a](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/b9a586a6173c2b21855832a9e63a3b055f18763b))
+
 ## [2.0.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.0.0...v2.0.1) (2025-12-16)
 
 
