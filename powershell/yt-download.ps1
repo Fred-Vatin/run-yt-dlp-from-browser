@@ -48,7 +48,7 @@ New-Variable -Name templateNameTitle -Value "%(title).70s.%(ext)s" -Option Const
 # if useTitle is true then use $templateNameTitle else $templateNameChannel
 New-Variable -Name useTitle -Value $true -Option Constant
 # defaut quality for video (make it compatible to upload on 𝕏)
-New-Variable -Name videoQuality -Value "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio"
+New-Variable -Name videoQuality -Value "bestvideo*[vcodec^=avc1]+bestaudio*[acodec^=mp4a]/bestvideo*+bestaudio*/best"
 # Videos will use this container
 New-Variable -Name videoContainer -Value "mp4" -Option Constant
 # set URLs for which the script will detect as audio
@@ -384,7 +384,7 @@ if ($url -and -not $install -and -not $uninstall) {
           "--audio-format", "mp3",
           "--audio-quality", "0",
           "-o", "$output",
-          "-f", "bestaudio[ext=mp3]/bestaudio/bestvideo+bestaudio",
+          "-f", "bestaudio[ext=mp3]/bestaudio*/bestvideo*+bestaudio*",
           $DL_URL
         )
       }
@@ -392,7 +392,7 @@ if ($url -and -not $install -and -not $uninstall) {
         $global:options = @(
           "--extract-audio",
           "-o", "$output",
-          "-f", "bestaudio[ext=$QUALITY]/bestaudio/bestvideo+bestaudio",
+          "-f", "bestaudio*[ext=$QUALITY]/bestaudio*/bestvideo*+bestaudio*",
           $DL_URL
         )
       }
@@ -402,10 +402,10 @@ if ($url -and -not $install -and -not $uninstall) {
 
       if ($QUALITY) {
         if ($QUALITY -ieq "best") {
-          $videoQuality = "bestvideo+bestaudio/best"
+          $videoQuality = "bestvideo*+bestaudio*/best"
         }
         else {
-          $videoQuality = "bestvideo[vcodec^=avc1][height<=$QUALITY]+bestaudio[ext=m4a]/bestvideo[height<=$QUALITY]+bestaudio/best"
+          $videoQuality = "bestvideo*[vcodec^=avc1][height<=$QUALITY]+bestaudio*[acodec=mp4a]/bestvideo*[height<=$QUALITY]+bestaudio*/best"
         }
       }
       $global:options = @(
