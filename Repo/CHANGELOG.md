@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.1.0...v2.1.1) (2026-03-12)
+
+
+### 🐞 Bug Fixes
+
+* ERROR: [youtube] Requested format is not available. ([6467290](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/64672900252564973ee2aebc09bf3fd928cf3bda))
+
 ## [2.1.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.0.1...v2.1.0) (2026-01-02)
 
 
