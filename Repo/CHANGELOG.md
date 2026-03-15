@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.1.1...v2.1.2) (2026-03-15)
+
+
+### 🐞 Bug Fixes
+
+* audio was not always downloaded with video ([f04444c](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/f04444c46af80aa66249ed4c5520f84c50139d4b))
+
 ## [2.1.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.1.0...v2.1.1) (2026-03-12)
 
 
