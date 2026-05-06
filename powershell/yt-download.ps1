@@ -39,7 +39,10 @@ else {
 #===========================================================================
 # you can edit those values
 New-Variable -Name UI_Path -Value "D:/Programmes/Internet/youtube-dl/YDL-UI_Portable/YDL-UI.exe" -Option Constant
-New-Variable -Name myCookies -Value "D:\OneDrive\Backup\Internet\youtube-dl\cookies.txt" -Option Constant
+New-Variable -Name UseBrowser -Value $true -Option Constant # true is recommended
+# Must be the name of a yt-dlp supported browser and optionnaly the name of the profile directory containing the cookies you need
+New-Variable -Name browserCookies -Value "firefox:oo49eawy.Youtube" -Option Constant
+New-Variable -Name myCookies -Value "D:/pathTo/cookies.txt" # it is reccommanded to not use such a file for security reason.
 
 New-Variable -Name directory -Value (Join-Path -Path "$downloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
 New-Variable -Name templateNameChannel -Value "%(uploader|)s%(uploader& - )s%(title).70s.%(ext)s" -Option Constant
@@ -112,6 +115,10 @@ function Show-Help {
   Write-Host "`t$directory`n"
   Write-Host "UI_Path" -ForegroundColor Magenta
   Write-Host "`t$UI_Path`n"
+  Write-Host "UseBrowser (ignore \"myCookies\" if true)" -ForegroundColor Magenta
+  Write-Host "`t$UseBrowser`n"
+  Write-Host "browserCookies" -ForegroundColor Magenta
+  Write-Host "`t$browserCookies`n"
   Write-Host "myCookies" -ForegroundColor Magenta
   Write-Host "`t$myCookies`n"
 }
@@ -444,13 +451,15 @@ if ($url -and -not $install -and -not $uninstall) {
   <#*==========================================================================
   * ℹ		TEST COOKIES
   ===========================================================================#>
-  # Test cookie path
-  if (Test-Path -Path $myCookies) {
-    Write-Host "`- Use user cookies from file" -ForegroundColor Green
-  }
-  else {
-    Write-Host "The cookie file doesn’t exist and will not be used:`n   $myCookies" -ForegroundColor Yellow
-    $myCookies = ""
+  if (-not $UseBrowser) {
+    # Test cookie path
+    if (Test-Path -Path $myCookies) {
+      Write-Host "`- Use user cookies from file" -ForegroundColor Green
+    }
+    else {
+      Write-Host "The cookie file doesn’t exist and will not be used:`n   $myCookies" -ForegroundColor Yellow
+      $myCookies = ""
+    }
   }
 
   <#*==========================================================================
@@ -464,7 +473,10 @@ if ($url -and -not $install -and -not $uninstall) {
   $pattern = '-o\s+(.+?)\s+http'
   $substitution = '-o "$1" http'
 
-  if ($myCookies) {
+  if ($UseBrowser) {
+    $options += @("--cookies-from-browser", "$browserCookies")
+  }
+  elseif ($myCookies) {
     $options += @("--cookies", "$myCookies")
   }
 
