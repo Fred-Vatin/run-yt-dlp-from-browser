@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.1.2...v2.2.0) (2026-05-06)
+
+
+### 🚀 Features
+
+* **js:** button now display a menu ([fe55dc6](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/fe55dc61e2e1151ef6d626d469ecf2ef4ac092c0))
+* **ps1:** use cookies from browser ([621a651](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/621a651c391065262dbad1697457c98ec914d076))
+
 ## [2.1.2](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.1.1...v2.1.2) (2026-03-15)
 
 
