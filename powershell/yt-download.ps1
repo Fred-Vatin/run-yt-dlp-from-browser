@@ -42,7 +42,7 @@ New-Variable -Name UI_Path -Value "D:/Programmes/Internet/youtube-dl/YDL-UI_Port
 New-Variable -Name UseBrowser -Value $true -Option Constant # true is recommended
 # Must be the name of a yt-dlp supported browser and optionnaly the name of the profile directory containing the cookies you need
 New-Variable -Name browserCookies -Value "firefox:oo49eawy.Youtube" -Option Constant
-New-Variable -Name myCookies -Value "D:/pathTo/cookies.txt" # it is reccommanded to not use such a file for security reason.
+New-Variable -Name myCookies -Value "D:/pathTo/cookies.txt" # it is recommended to not use such a file for security reason.
 
 New-Variable -Name directory -Value (Join-Path -Path "$downloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
 New-Variable -Name templateNameChannel -Value "%(uploader|)s%(uploader& - )s%(title).70s.%(ext)s" -Option Constant
