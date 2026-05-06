@@ -8,17 +8,21 @@ Check the [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to 
 
 ## Screenshots
 
-One click button on youtube
+New download button added on youtube when a video or music is playing
 
-<img alt="image" src="https://github.com/user-attachments/assets/905a403c-ecbc-4521-bafb-ea58c22710b7" />
+<img width="550" alt="image" src="https://github.com/user-attachments/assets/905a403c-ecbc-4521-bafb-ea58c22710b7" />
 
-Menu for other formats and sites
+One click displays a download menu
 
-<img alt="image" src="https://github.com/user-attachments/assets/bed1fa17-9624-4fe1-9321-4745063a38ce" />
+<img width="200" alt="image" src="https://github.com/user-attachments/assets/2e784c54-4fae-4da0-9686-1ff67a64a982" />
+
+Menu for other formats and sites is available via Tampermonkey button in your browser
+
+<img width="200" alt="image" src="https://github.com/user-attachments/assets/b0ef0ca8-6bf3-42d0-88a8-c4112658d54d" />
 
 Detailed output of the download job
 
-<img alt="image" src="https://github.com/user-attachments/assets/1c204747-c193-4620-9df7-8147eb1d21c7" />
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/1c204747-c193-4620-9df7-8147eb1d21c7" />
 
 
 ## Prerequisites
@@ -29,6 +33,7 @@ _See [wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki) to know 
 - your browser needs the extension [Tampermonkey](https://www.tampermonkey.net/) to be installed
 - your Windows user account must be allowed to run powershell script `.ps1`
 - [Powershell 7](https://github.com/PowerShell/PowerShell)
+- To download from **Youtube**, you will need to configure **yt-dlp** to [use your cookies](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/Using-your-cookies-in-yt%E2%80%90dlp)
 
 ## Automatic Updates
 
