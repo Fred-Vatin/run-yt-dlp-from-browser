@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.2.0...v2.3.0) (2026-05-08)
+
+
+### 🧰 Other
+
+* add PowerShell config file to .gitignore ([9ceca70](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/9ceca70a8961124f791018d10a90e32b034d0b50))
+
+
+### 🚀 Features
+
+* **ps1:** use external config.ps1 ([1f0ba56](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/1f0ba566e17dc8d83af3df11f4ab1c7aa35a6370))
+
 ## [2.2.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.1.2...v2.2.0) (2026-05-06)
 
 
