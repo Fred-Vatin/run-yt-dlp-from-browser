@@ -3,12 +3,16 @@ param(
   [switch]$uninstall,
   [switch]$help,
   [switch]$man,
+  [switch]$version,
   [string]$url,
   [switch]$debug
 )
 
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
+
+$ScriptVersion = "2.3.0"
+
 <#*==========================================================================
 *	ℹ		PARAMETERS
 
@@ -19,8 +23,7 @@ $ErrorActionPreference = 'Stop'
 * ℹ                   DEFAULT VARIABLES
 ===========================================================================#>
 
-# This folder name must exist as a child in the user downloads directory defined by the OS
-New-Variable -Name DownloadFolderName -Value "yt-dlp" -Option Constant
+
 
 # Don’t edit this part unless you know what you do.
 # Get default downloads dir for each platform
@@ -37,27 +40,47 @@ else {
 }
 
 #===========================================================================
-# you can edit those values
-New-Variable -Name UI_Path -Value "D:/Programmes/Internet/youtube-dl/YDL-UI_Portable/YDL-UI.exe" -Option Constant
-New-Variable -Name UseBrowser -Value $true -Option Constant # true is recommended
-# Must be the name of a yt-dlp supported browser and optionnaly the name of the profile directory containing the cookies you need
-New-Variable -Name browserCookies -Value "firefox:oo49eawy.Youtube" -Option Constant
-New-Variable -Name myCookies -Value "D:/pathTo/cookies.txt" # it is recommended to not use such a file for security reason.
+# import user config
+try {
+  $ConfigPath = Join-Path $PSScriptRoot "config.ps1"
+  if (Test-Path $ConfigPath) {
+    . $ConfigPath
+  }
+  else {
+    TerminateWithError -errorMessage "`"config.ps1`" is missing."
+  }
+}
+catch {
+  TerminateWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
+}
+
+$Defaults = @{
+  DownloadFolderName  = "yt-dlp"
+  UI_Path             = ""
+  UseBrowserCookies   = $true
+  browserCookies      = "firefox"
+  myCookies           = ""
+  templateNameChannel = "%(uploader)s - %(title)s.%(ext)s"
+  templateNameTitle   = "%(title)s.%(ext)s"
+  useTitle            = $true
+  videoQuality        = "best"
+  videoContainer      = "mp4"
+  autoAudio           = @("https://music.youtube.com/watch?v=")
+  jsRuntime           = "bun"
+}
+
+foreach ($VarName in $Defaults.Keys) {
+  if (-not (Get-Variable -Name $VarName -ErrorAction SilentlyContinue)) {
+    # Required variable is missing in config.ps1, let’s create it here with the default value
+    New-Variable -Name $VarName -Value $Defaults[$VarName] -Option Constant -Confirm:$false
+    Write-Host
+    Write-Warning "Variable '$VarName' is missing in your `"config.ps1`". We will use the fallback value: `"$($Defaults[$VarName])`""
+    Write-Host
+  }
+}
+#===========================================================================
 
 New-Variable -Name directory -Value (Join-Path -Path "$downloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
-New-Variable -Name templateNameChannel -Value "%(uploader|)s%(uploader& - )s%(title).70s.%(ext)s" -Option Constant
-New-Variable -Name templateNameTitle -Value "%(title).70s.%(ext)s" -Option Constant
-# if useTitle is true then use $templateNameTitle else $templateNameChannel
-New-Variable -Name useTitle -Value $true -Option Constant
-# defaut quality for video (make it compatible to upload on 𝕏)
-New-Variable -Name videoQuality -Value "bestvideo*[vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo*+bestaudio/best"
-# Videos will use this container
-New-Variable -Name videoContainer -Value "mp4" -Option Constant
-# set URLs for which the script will detect as audio
-New-Variable -Name autoAudio -Value @("https://music.youtube.com/watch?v=") -Option Constant
-# set default js runtime required in the new yt-dlp versions. Just comment if using Deno.
-New-Variable -Name jsRuntime -Value "bun" -Option Constant
-
 
 # This is the command triggered by the protocol
 # It open the Windows Terminal with the profile 'PowerShell 7' and this script with the given url
@@ -74,8 +97,19 @@ New-Variable -Name repo -Value "https://github.com/Fred-Vatin/run-yt-dlp-from-br
 <#*==========================================================================
 * ℹ                   FUNCTIONS
 ===========================================================================#>
+function Show-Version {
+  Write-Host ""
+  Write-Host "yt-download" -ForegroundColor Yellow
+  Write-Host "Version : " -NoNewline
+  Write-Host "$ScriptVersion" -ForegroundColor Green
+  Write-Host ""
+}
+
+
 # Display help message with specified formatting
 function Show-Help {
+  Show-Version
+  Write-Host ""
   Write-Host "ℹ`tPARAMETERS" -ForegroundColor Magenta
   Write-Host "========================`n" -ForegroundColor Magenta
   Write-Host "-help" -ForegroundColor Magenta
@@ -115,8 +149,8 @@ function Show-Help {
   Write-Host "`t$directory`n"
   Write-Host "UI_Path" -ForegroundColor Magenta
   Write-Host "`t$UI_Path`n"
-  Write-Host "UseBrowser (ignore \"myCookies\" if true)" -ForegroundColor Magenta
-  Write-Host "`t$UseBrowser`n"
+  Write-Host "UseBrowserCookies (ignore \"myCookies\" if true)" -ForegroundColor Magenta
+  Write-Host "`t$UseBrowserCookies`n"
   Write-Host "browserCookies" -ForegroundColor Magenta
   Write-Host "`t$browserCookies`n"
   Write-Host "myCookies" -ForegroundColor Magenta
@@ -200,7 +234,16 @@ function Test-FFmpegInstallation {
 <#*==========================================================================
 * ℹ            GET PARAMETERS
 ===========================================================================#>
-Clear-Host
+if ($version) {
+  Show-Version
+  Write-Host "Source  : " -NoNewline
+  Write-Host "https://github.com/Fred-Vatin/run-yt-dlp-from-browser" -ForegroundColor Cyan
+  Write-Host ""
+  Write-Host "Run with the " -NoNewline
+  Write-Host "-help " -ForegroundColor Magenta -NoNewline
+  Write-Host "parameter for more info"
+  exit
+}
 
 <#*==========================================================================
 * ℹ		HANDLE HELP PARAMETER
@@ -223,6 +266,8 @@ if ($man) {
 ===========================================================================#>
 # Handle -url parameter if no other parameters are specified
 if ($url -and -not $install -and -not $uninstall) {
+  Show-Version
+
   Write-Host "`nScript called with argument " -NoNewline
   Write-Host "-url" -ForegroundColor Magenta
   Write-Host "`t$url`n"
@@ -451,7 +496,7 @@ if ($url -and -not $install -and -not $uninstall) {
   <#*==========================================================================
   * ℹ		TEST COOKIES
   ===========================================================================#>
-  if (-not $UseBrowser) {
+  if (-not $UseBrowserCookies) {
     # Test cookie path
     if (Test-Path -Path $myCookies) {
       Write-Host "`- Use user cookies from file" -ForegroundColor Green
@@ -473,7 +518,7 @@ if ($url -and -not $install -and -not $uninstall) {
   $pattern = '-o\s+(.+?)\s+http'
   $substitution = '-o "$1" http'
 
-  if ($UseBrowser) {
+  if ($UseBrowserCookies) {
     $options += @("--cookies-from-browser", "$browserCookies")
   }
   elseif ($myCookies) {
@@ -542,6 +587,8 @@ if (-not (Test-AdminPrivileges)) {
 $ytdlKey = "Registry::HKEY_CLASSES_ROOT\$protocol"
 
 if ($uninstall) {
+  Show-Version
+
   WriteTitle "UNINSTALL"
   Write-Host "Uninstalling ytdl protocol handler..."
 
@@ -566,6 +613,8 @@ if ($uninstall) {
 ===========================================================================#>
 
 if ($install) {
+  Show-Version
+
   WriteTitle "INSTALL"
   Write-Host "Installing ytdl protocol handler...`n"
 
