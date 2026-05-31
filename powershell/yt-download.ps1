@@ -11,7 +11,7 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.3.0"
+$ScriptVersion = "2.4.0"
 
 <#*==========================================================================
 *	ℹ		PARAMETERS
@@ -55,18 +55,19 @@ catch {
 }
 
 $Defaults = @{
-  DownloadFolderName  = "yt-dlp"
-  UI_Path             = ""
-  UseBrowserCookies   = $true
-  browserCookies      = "firefox"
-  myCookies           = ""
-  templateNameChannel = "%(uploader)s - %(title)s.%(ext)s"
-  templateNameTitle   = "%(title)s.%(ext)s"
-  useTitle            = $true
-  videoQuality        = "best"
-  videoContainer      = "mp4"
-  autoAudio           = @("https://music.youtube.com/watch?v=")
-  jsRuntime           = "bun"
+  autoAudio            = @("https://music.youtube.com/watch?v=")
+  browserCookies       = "firefox"
+  DownloadFolderName   = "yt-dlp"
+  jsRuntime            = "bun"
+  myCookies            = ""
+  SelectDownloadedFile = $true
+  templateNameChannel  = "%(uploader)s - %(title)s.%(ext)s"
+  templateNameTitle    = "%(title)s.%(ext)s"
+  UI_Path              = ""
+  UseBrowserCookies    = $true
+  useTitle             = $true
+  videoContainer       = "mp4"
+  videoQuality         = "best"
 }
 
 foreach ($VarName in $Defaults.Keys) {
@@ -93,6 +94,7 @@ New-Variable -Name protocol -Value "ytdl"
 
 New-Variable -Name repo -Value "https://github.com/Fred-Vatin/run-yt-dlp-from-browser" -Option Constant
 
+New-Variable -Name IsTest -Value $false
 
 <#*==========================================================================
 * ℹ                   FUNCTIONS
@@ -189,10 +191,13 @@ function TerminateWithError {
 function WriteTitle {
   param(
     [Parameter(Mandatory = $true)]
-    [string]$title
+    [string]$Title,
+
+    [Parameter(Mandatory = $false)]
+    [System.ConsoleColor]$ForegroundColor = [System.ConsoleColor]::Cyan
   )
 
-  Write-Host "`n===== $title =====`n" -ForegroundColor Cyan
+  Write-Host "`n===== $Title =====`n" -ForegroundColor $ForegroundColor
 }
 
 # Check if the script is running with administrative privileges
@@ -229,6 +234,44 @@ function Get-YtdlPath {
 function Test-FFmpegInstallation {
   if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
     TerminateWithError -errorMessage "FFmpeg is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command."
+  }
+}
+
+# Colorize yt-dlp output
+function Out-ColoredLog {
+  [CmdletBinding()]
+  param(
+    [Parameter(ValueFromPipeline = $true)]
+    [string]$InputObject
+  )
+
+  process {
+    if ($InputObject -match '^(\[(?<tag>.+?)\])(?<remainder>.*)$') {
+      $tag = $Matches['tag']
+      $remainder = $Matches['remainder']
+
+      if ($tag -eq 'debug') {
+        Write-Host $InputObject -ForegroundColor DarkGray
+      }
+      elseif ($tag -eq 'info') {
+        Write-Host $InputObject -ForegroundColor DarkCyan
+      }
+      else {
+        $color = switch ($tag) {
+          'download' { 'Green' }
+          'warning' { 'Yellow' }
+          'error' { 'Red' }
+          'youtube' { 'Cyan' }
+          default { 'White' }
+        }
+
+        Write-Host "[$tag]" -ForegroundColor $color -NoNewline
+        Write-Host $remainder
+      }
+    }
+    else {
+      Write-Host $InputObject
+    }
   }
 }
 <#*==========================================================================
@@ -425,7 +468,7 @@ if ($url -and -not $install -and -not $uninstall) {
         # When QUALITY is an empty string, download the best audio
         $global:options = @(
           "--extract-audio",
-          "-o", "$output",
+          "--output", "$output",
           $DL_URL
         )
       }
@@ -434,16 +477,16 @@ if ($url -and -not $install -and -not $uninstall) {
           "--extract-audio",
           "--audio-format", "mp3",
           "--audio-quality", "0",
-          "-o", "$output",
-          "-f", "bestaudio[ext=mp3]/bestaudio/bestvideo*+bestaudio",
+          "--output", "$output",
+          "--format", "bestaudio[ext=mp3]/bestaudio/bestvideo*+bestaudio",
           $DL_URL
         )
       }
       else {
         $global:options = @(
           "--extract-audio",
-          "-o", "$output",
-          "-f", "bestaudio*[ext=$QUALITY]/bestaudio/bestvideo*+bestaudio",
+          "--output", "$output",
+          "--format", "bestaudio*[ext=$QUALITY]/bestaudio/bestvideo*+bestaudio",
           $DL_URL
         )
       }
@@ -460,18 +503,23 @@ if ($url -and -not $install -and -not $uninstall) {
         }
       }
       $global:options = @(
-        "-f", $videoQuality,
+        "--format", $videoQuality,
         "--merge-output-format", $videoContainer,
-        "-o", "$output",
+        "--output", "$output",
         $DL_URL
       )
     }
     "test" {
       Write-Host "- Mode : test" -ForegroundColor Green
+      $IsTest = $true
 
       $global:options = @(
         "--skip-download",
-        "--get-title",
+        "--print", " ",
+        "--print", "Title           : %(title)s",
+        "--print", "Duration        : %(duration_string)s",
+        "--print", "Uploader        : %(uploader)s",
+        "--print", "Default Formats : %(format)s",
         "--list-formats",
         $DL_URL
       )
@@ -512,12 +560,6 @@ if ($url -and -not $install -and -not $uninstall) {
   ===========================================================================#>
   Write-Host "`nCOMMAND:" -ForegroundColor Cyan
 
-
-  # To display the correct command so it can be copied by user and used elsewhere
-  # we need to quote the output directory
-  $pattern = '-o\s+(.+?)\s+http'
-  $substitution = '-o "$1" http'
-
   if ($UseBrowserCookies) {
     $options += @("--cookies-from-browser", "$browserCookies")
   }
@@ -529,14 +571,67 @@ if ($url -and -not $install -and -not $uninstall) {
     $options += @("--js-runtimes", $jsRuntime)
   }
 
-  $optionsString = $options -join ' '
+  # If video title contains a dot as last character, delete it
+  if (-not $IsTest) {
+    $options += @("--replace-in-metadata", "title", '\.$', "")
+  }
+
+  if ($SelectDownloadedFile -and -not $IsTest) {
+    $options += @("--exec", 'pwsh -NoProfile -NonInteractive -Command "Start-Process explorer.exe -ArgumentList \"/select,`\"{}`\"\""')
+  }
+
+  if ($IsTest) {
+    #  quote option value when it contains space
+    $optionsString = ($global:options | ForEach-Object {
+        if ($_ -like '* *' -or $_ -eq ' ') {
+          '"' + $_ + '"'
+        }
+        else {
+          $_
+        }
+      }) -join ' '
+  }
+  else {
+    $optionsString = ($options) -join ' '
+  }
+
+  # To display the correct command so it can be copied by user and used elsewhere
+  # we need to quote the output directory
+  $pattern = '--output\s+(.+?)\s+http'
+  $substitution = '--output "$1" http'
 
   $optionsString = $optionsString -replace $pattern, $substitution
+
+  # we need to quote format
+  $pattern = '--format\s+?(.+?)\s'
+  $substitution = '--format "$1" '
+
+  $optionsString = $optionsString -replace $pattern, $substitution
+
+  if ($UseBrowserCookies) {
+    # we need to quote --cookies-from-browser
+    $pattern = '--cookies-from-browser\s+?(.+?)\s'
+    $substitution = '--cookies-from-browser "$1" '
+
+    $optionsString = $optionsString -replace $pattern, $substitution
+  }
 
   if ($myCookies) {
     $pattern = '--cookies\s+(.+?\.txt)'
     $substitution = '--cookies "$1"'
     $optionsString = $optionsString -replace $pattern, $substitution
+  }
+
+  if (-not $IsTest) {
+    $pattern = '--replace-in-metadata\s+?(.+?)\s+(.+?\$)\s?'
+    $substitution = '--replace-in-metadata "$1" "$2" ""'
+    $optionsString = $optionsString -replace $pattern, $substitution
+  }
+
+  if ($SelectDownloadedFile -and -not $IsTest) {
+    $pattern = '--exec\s+(.+)'
+    $substitution = '--exec ''$1'''
+    $optionsString = $optionsString -replace $pattern, $substitution -replace ',\s+', ','
   }
 
   if ($debug) {
@@ -546,26 +641,34 @@ if ($url -and -not $install -and -not $uninstall) {
 
   Write-Host "yt-dlp $optionsString`n" -ForegroundColor Magenta
   Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
-  & yt-dlp $options
+
+  if ($IsTest) {
+    & yt-dlp $options
+  }
+  else {
+    & yt-dlp $options 2>&1 | Out-ColoredLog
+  }
 
 
   <#*==========================================================================
   * ℹ		OPEN DOWNLOAD DIR
   ===========================================================================#>
-  if ($TYPE -ne "test") {
-    Write-Host "`nOPEN OUTPUT DIRECTORY" -ForegroundColor Cyan
-    try {
-      # Open download dir in the default file explorer
-      Invoke-Item -Path $DL_DIR
-    }
-    catch {
-      TerminateWithError "Invoke-Item -Path $DL_DIR [failed]"
+  if ($LASTEXITCODE -eq 0) {
+
+    if (-not $IsTest) {
+      Write-Host "`nOPEN OUTPUT DIRECTORY" -ForegroundColor Cyan
     }
 
     # Play a beep to notify
     [console]::beep(650, 1000)
+
+    WriteTitle "SCRIPT ENDED WITH NO ERROR"
+
   }
-  WriteTitle "SCRIPT ENDED WITH NO ERROR"
+  else {
+    WriteTitle "SCRIPT ENDED WITH ERROR" -ForegroundColor Red
+    TerminateWithError -errorMessage "yt-dlp terminate with error"
+  }
 
   # Read-Host -Prompt "Press Enter to exit"
 
