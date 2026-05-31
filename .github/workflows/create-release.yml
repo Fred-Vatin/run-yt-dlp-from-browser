@@ -23,7 +23,7 @@ jobs:
     outputs:
       release--tag_name: ${{ steps.release.outputs.tag_name }}
       release--releases_created: ${{ steps.release.outputs.releases_created }}
-      release--prs_createde: ${{ steps.release.outputs.prs_created }}
+      release--prs_created: ${{ steps.release.outputs.prs_created }}
 
     steps:
       - name: Checkout code
@@ -53,7 +53,7 @@ jobs:
 
       - name: Run Release Please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: ${{ env.CONFIG_FILE_PATH }}
@@ -87,7 +87,7 @@ jobs:
         run: |
           echo "Release outputs:"
           echo "RELEASE CREATED: ${{ needs.release-please.outputs.release--releases_created }}" | tee -a $GITHUB_STEP_SUMMARY
-          echo "PR CREATED/UPDATED: ${{ needs.release-please.outputs.release--prs_createde }}" | tee -a $GITHUB_STEP_SUMMARY
+          echo "PR CREATED/UPDATED: ${{ needs.release-please.outputs.release--prs_created }}" | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Create ZIP archive
         run: |
