@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.3.0...v2.4.0) (2026-05-31)
+
+
+### 🚀 Features
+
+* release 2.4.0 ([f73445d](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/f73445dd4bce68ebab5acb5baa9e37fce3eacd43))
+
 ## [2.3.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.2.0...v2.3.0) (2026-05-08)
 
 
