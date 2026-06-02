@@ -11,7 +11,7 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.5.0-beta.1"
+$ScriptVersion = "2.5.0-beta.2"
 
 function TerminateWithError {
   param(
@@ -424,7 +424,7 @@ if ($url -and -not $install -and -not $uninstall) {
     }
 
     if ($parameters.ContainsKey('type')) {
-      $global:TYPE = $($parameters['type'])
+      $script:TYPE = $($parameters['type'])
     }
     else {
       TerminateWithError -errorMessage "[type] parameter is missing. It is required to tell yt-dlp what streams he has to download."
@@ -453,7 +453,7 @@ if ($url -and -not $install -and -not $uninstall) {
   ===========================================================================#>
 
   if ($parameters.ContainsKey('url')) {
-    $global:DL_URL = $($parameters['url'])
+    $script:DL_URL = $($parameters['url'])
   }
   else {
     TerminateWithError -errorMessage "[url] parameter is missing. It is required to tell yt-dlp the download source."
@@ -466,12 +466,12 @@ if ($url -and -not $install -and -not $uninstall) {
     # Check if $DL_URL is type : audio
     foreach ($audioPrefix in $autoAudio) {
       if ($DL_URL -like "$audioPrefix*") {
-        $global:TYPE = "audio" # redefine type
+        $script:TYPE = "audio" # redefine type
         Write-Host "`tAudio detected because it matches $audioPrefix"
         break
       }
       else {
-        $global:TYPE = "video" # redefine type
+        $script:TYPE = "video" # redefine type
         Write-Host "`tVideo will be used because no audio pattern detected in URL."
       }
     }
@@ -482,7 +482,7 @@ if ($url -and -not $install -and -not $uninstall) {
   * ℹ		TEST DOWNLOAD DIR
   ===========================================================================#>
   if ($parameters.ContainsKey('dldir')) {
-    $global:DL_DIR = $($parameters['dldir'])
+    $script:DL_DIR = $($parameters['dldir'])
 
     if (Test-Path -Path $DL_DIR -PathType Container) {
       Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
@@ -492,7 +492,7 @@ if ($url -and -not $install -and -not $uninstall) {
     }
   }
   else {
-    $global:DL_DIR = $FullDownloadDir
+    $script:DL_DIR = $FullDownloadDir
     if (Test-Path -Path $DL_DIR -PathType Container) {
       Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
     }
@@ -524,10 +524,10 @@ if ($url -and -not $install -and -not $uninstall) {
   ===========================================================================#>
 
   if ($parameters.ContainsKey('quality')) {
-    $global:QUALITY = $($parameters['quality'])
+    $script:QUALITY = $($parameters['quality'])
   }
   else {
-    $global:QUALITY = ""
+    $script:QUALITY = ""
   }
 
 
@@ -537,14 +537,14 @@ if ($url -and -not $install -and -not $uninstall) {
 
       if (-not $QUALITY) {
         # When QUALITY is an empty string, download the best audio
-        $global:options = @(
+        $script:options = @(
           "--extract-audio",
           "--output", "$output",
           $DL_URL
         )
       }
       elseif ($QUALITY -eq "forceMp3") {
-        $global:options = @(
+        $script:options = @(
           "--extract-audio",
           "--audio-format", "mp3",
           "--audio-quality", "0",
@@ -554,7 +554,7 @@ if ($url -and -not $install -and -not $uninstall) {
         )
       }
       else {
-        $global:options = @(
+        $script:options = @(
           "--extract-audio",
           "--output", "$output",
           "--format", "bestaudio*[ext=$QUALITY]/bestaudio/bestvideo*+bestaudio",
@@ -573,7 +573,7 @@ if ($url -and -not $install -and -not $uninstall) {
           $videoQuality = "bestvideo*[vcodec^=avc1][height<=$QUALITY]+bestaudio[acodec=mp4a]/bestvideo*[height<=$QUALITY]+bestaudio/best"
         }
       }
-      $global:options = @(
+      $script:options = @(
         "--format", $videoQuality,
         "--merge-output-format", $videoContainer,
         "--output", "$output",
@@ -584,7 +584,7 @@ if ($url -and -not $install -and -not $uninstall) {
       Write-Host "- Mode : test" -ForegroundColor Green
       $IsTest = $true
 
-      $global:options = @(
+      $script:options = @(
         "--skip-download",
         "--print", " ",
         "--print", "Title           : %(title)s",
@@ -656,7 +656,7 @@ if ($url -and -not $install -and -not $uninstall) {
 
   if ($IsTest) {
     #  quote option value when it contains space
-    $optionsString = ($global:options | ForEach-Object {
+    $optionsString = ($script:options | ForEach-Object {
         if ($_ -like '* *' -or $_ -eq ' ') {
           '"' + $_ + '"'
         }
