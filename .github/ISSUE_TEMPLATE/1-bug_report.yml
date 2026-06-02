@@ -1,0 +1,90 @@
+name: "Bug Report"
+description: "File a bug report to help us improve"
+title: "[BUG]: "
+labels: ["bug", "triage"]
+assignees: ["Fred-Vatin"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before posting, please :
+
+        1. Check if a similar [issue](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/issues) has already been posted.
+        2. Run `yt-download.ps1 -version`. ([Wiki](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/TIPS:-Run-the-script-as-a-command-from-everywhere))
+
+        Thanks for your help !
+  - type: input
+    id: versionPS
+    attributes:
+      label: yt-download.ps1 Version
+      description: Run "yt-download.ps1 -version"
+      placeholder: 2.5.0
+    validations:
+      required: true
+      regex: '^\d+\.\d+\.\d+'
+  - type: input
+    id: versionJS
+    attributes:
+      label: UserScript Version (optional)
+      description: Check `yt-dlp` in the Tampermonkey dashboard
+      placeholder: 2.0.0
+    validations:
+      required: false
+      regex: '^\d+\.\d+\.\d+'
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Describe the bug and share the steps required to reproduce the behavior (you can past screenshots)
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: What unexpectedly happens ?
+      placeholder: |
+        Paste any error, output or helpul screenshot.
+    validations:
+      required: true
+  - type: textarea
+    id: expectation
+    attributes:
+      label: Expectation (optional)
+      description: What should happen ?
+      placeholder: |
+        Just work, obviously…
+    validations:
+      required: false
+  - type: textarea
+    id: comment
+    attributes:
+      label: Any other comment here (optional)
+      placeholder: |
+        If you know what lines in the script is involved, any details could help.
+    validations:
+      required: false
+  - type: textarea
+    id: PStable
+    attributes:
+      label: Powershell version and environment
+      description: Run "$PSversionTable" and paste the content here
+      render: pwsh
+      placeholder: |
+        Name                           Value
+        ----                           -----
+        PSVersion                      7.6.2
+        PSEdition                      Core
+        GitCommitId                    7.6.2
+        OS                             Microsoft Windows 10.0.26200
+        Platform                       Win32NT
+        PSCompatibleVersions           {1.0, 2.0, 3.0, 4.0…}
+        PSRemotingProtocolVersion      2.4
+        SerializationVersion           1.1.0.1
+        WSManStackVersion              3.0
+    validations:
+      required: true
