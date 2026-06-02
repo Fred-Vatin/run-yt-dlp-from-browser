@@ -702,6 +702,10 @@ if ($url -and -not $install -and -not $uninstall) {
     $pattern = '--replace-in-metadata\s+?(.+?)\s+(.+?\$)\s?'
     $substitution = '--replace-in-metadata "$1" "$2" ""'
     $optionsString = $optionsString -replace $pattern, $substitution
+
+    $pattern = '--replace-in-metadata\s+?(title)\s+?(.+?)\s+(\S+)'
+    $substitution = '--replace-in-metadata "$1" "$2" "$3"'
+    $optionsString = $optionsString -replace $pattern, $substitution
   }
 
   if ($SelectDownloadedFile -and -not $IsTest) {
