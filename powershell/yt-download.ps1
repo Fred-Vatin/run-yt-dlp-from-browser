@@ -571,9 +571,12 @@ if ($url -and -not $install -and -not $uninstall) {
     $options += @("--js-runtimes", $jsRuntime)
   }
 
-  # If video title contains a dot as last character, delete it
   if (-not $IsTest) {
+    # If video title contains a dot as last character, delete it
     $options += @("--replace-in-metadata", "title", '\.$', "")
+    # escape every pwsh chars in title
+    $options += @("--replace-in-metadata", "title", '&', "and")
+    $options += @("--replace-in-metadata", "title", '\|', "-")
   }
 
   if ($SelectDownloadedFile -and -not $IsTest) {
