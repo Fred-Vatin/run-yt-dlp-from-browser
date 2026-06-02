@@ -11,7 +11,7 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.4.0"
+$ScriptVersion = "2.5.0"
 
 <#*==========================================================================
 *	ℹ		PARAMETERS
