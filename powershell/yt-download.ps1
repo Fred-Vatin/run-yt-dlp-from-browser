@@ -72,7 +72,6 @@ $Defaults = @{
   autoAudio            = @("https://music.youtube.com/watch?v=")
   browserCookies       = "firefox"
   DownloadFolderName   = "yt-dlp"
-  myCookies            = ""
   SelectDownloadedFile = $true
   templateNameChannel  = "%(uploader)s - %(title)s.%(ext)s"
   templateNameTitle    = "%(title)s.%(ext)s"
@@ -93,6 +92,8 @@ foreach ($VarName in $Defaults.Keys) {
     Write-Host
   }
 }
+
+$myCookies = ""
 #===========================================================================
 
 New-Variable -Name FullDownloadDir -Value (Join-Path -Path "$DownloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
@@ -617,7 +618,7 @@ if ($url -and -not $install -and -not $uninstall) {
   <#*==========================================================================
   * ℹ		TEST COOKIES
   ===========================================================================#>
-  if (-not $UseBrowserCookies) {
+  if ((-not $UseBrowserCookies) -and ($myCookies)) {
     # Test cookie path
     if (Test-Path -Path $myCookies) {
       Write-Host "`- Use user cookies from file" -ForegroundColor Green
