@@ -78,6 +78,7 @@ $Defaults = @{
   templateNameTitle    = "%(title)s.%(ext)s"
   UI_Path              = ""
   UseBrowserCookies    = $true
+  UseColorfulOutput    = $true
   useTitle             = $true
   videoContainer       = "mp4"
   videoQuality         = "best"
@@ -258,16 +259,24 @@ function Out-ColoredLog {
     [string]$InputObject
   )
 
+  begin {
+    $script:lastWasProgress = $false
+  }
+
   process {
     if ($InputObject -match '^(\[(?<tag>.+?)\])(?<remainder>.*)$') {
       $tag = $Matches['tag']
       $remainder = $Matches['remainder']
 
       if ($tag -eq 'debug') {
+        if ($script:lastWasProgress) { Write-Host "" }
         Write-Host $InputObject -ForegroundColor DarkGray
+        $script:lastWasProgress = $false
       }
       elseif ($tag -eq 'info') {
+        if ($script:lastWasProgress) { Write-Host "" }
         Write-Host $InputObject -ForegroundColor DarkCyan
+        $script:lastWasProgress = $false
       }
       else {
         $color = switch ($tag) {
@@ -278,13 +287,50 @@ function Out-ColoredLog {
           default { 'White' }
         }
 
-        Write-Host "[$tag]" -ForegroundColor $color -NoNewline
-        Write-Host $remainder
+        if ($tag -eq 'download') {
+          # Identify standard progress lines (ex: 96.1% or 100.0%)
+          $isProgress = $remainder -match '\d+\.\d+%' -and $remainder -notmatch '100%\s+of'
+
+          if ($isProgress) {
+            # Overwrite the current line using \r
+            Write-Host "$([char]13)[$tag]" -ForegroundColor $color -NoNewline
+            Write-Host "$remainder" -NoNewline
+            $script:lastWasProgress = $true
+          }
+          else {
+            # If this is the final '100% of' summary, we overwrite the last progress line
+            # instead of adding a newline, fulfilling the update logic.
+            if ($script:lastWasProgress -and $remainder -match '100%\s+of') {
+              Write-Host "$([char]13)[$tag]" -ForegroundColor $color -NoNewline
+              Write-Host $remainder
+            }
+            else {
+              if ($script:lastWasProgress) { Write-Host "" }
+              Write-Host "[$tag]" -ForegroundColor $color -NoNewline
+              Write-Host $remainder
+            }
+            $script:lastWasProgress = $false
+          }
+        }
+        else {
+          if ($script:lastWasProgress) { Write-Host "" }
+          Write-Host "[$tag]" -ForegroundColor $color -NoNewline
+          Write-Host $remainder
+          $script:lastWasProgress = $false
+        }
       }
     }
     else {
-      Write-Host $InputObject
+      if (-not [string]::IsNullOrWhiteSpace($InputObject)) {
+        if ($script:lastWasProgress) { Write-Host "" }
+        Write-Host $InputObject
+        $script:lastWasProgress = $false
+      }
     }
+  }
+
+  end {
+    if ($script:lastWasProgress) { Write-Host "" }
   }
 }
 <#*==========================================================================
@@ -672,7 +718,7 @@ if ($url -and -not $install -and -not $uninstall) {
   Write-Host "yt-dlp $optionsString`n" -ForegroundColor Magenta
   Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
 
-  if ($IsTest) {
+  if ($IsTest -or (-not $UseColorfulOutput)) {
     & yt-dlp $options
   }
   else {
