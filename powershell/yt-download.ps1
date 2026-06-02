@@ -161,7 +161,7 @@ function Show-Help {
   Write-Host "========================`n" -ForegroundColor Magenta
   Write-Host "Edit this script to customize those paths."
   Write-Host "`"/`" as separator works also in Windows.`n"
-  Write-Host "directory" -ForegroundColor Magenta
+  Write-Host "FullDownloadDir" -ForegroundColor Magenta
   Write-Host "`t$FullDownloadDir`n"
   Write-Host "UI_Path" -ForegroundColor Magenta
   Write-Host "`t$UI_Path`n"
