@@ -11,17 +11,57 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.5.0"
+$ScriptVersion = "2.5.0.b1"
+
+function TerminateWithError {
+  param(
+    [string]$errorMessage = "Error happened.`nEXIT",
+    [System.Exception]$exception
+  )
+
+  [console]::beep(1000, 100)
+  [console]::beep(1000, 100)
+  [console]::beep(1000, 100)
+  [console]::beep(1000, 1000)
+
+  if ($exception) {
+    $line = $_.InvocationInfo.ScriptLineNumber
+
+    if ($line) {
+      Write-Host "`n$errorMessage :`n`t$($exception.Message)`n`tLine: $line`nEXIT" -ForegroundColor Red
+    }
+    else {
+      Write-Host "`n$errorMessage :`n$($exception.Message)`nEXIT" -ForegroundColor Red
+    }
+  }
+  else {
+    Write-Host "ERROR`n" -ForegroundColor Red
+    Write-Host "   $errorMessage`n`nEXIT" -ForegroundColor Red
+  }
+
+  exit 1
+}
 
 <#*==========================================================================
 *	ℹ		PARAMETERS
 
   Run the script with the -help parameter to know how to use it
-===========================================================================#>
-
-<#*==========================================================================
+=============================================================================
 * ℹ                   DEFAULT VARIABLES
 ===========================================================================#>
+# import user config
+try {
+  $ConfigPath = Join-Path $PSScriptRoot "config.ps1"
+  if (Test-Path $ConfigPath) {
+    . $ConfigPath
+  }
+  else {
+    TerminateWithError -errorMessage "`"config.ps1`" is missing."
+  }
+}
+catch {
+  TerminateWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
+}
 
 # Don’t edit this part unless you know what you do.
 # Get default downloads dir for each platform
@@ -51,21 +91,6 @@ else {
     Write-Host "`ttry to comment the line to use default download dir for user.`nEXIT" -ForegroundColor Red
     exit 1
   }
-}
-
-#===========================================================================
-# import user config
-try {
-  $ConfigPath = Join-Path $PSScriptRoot "config.ps1"
-  if (Test-Path $ConfigPath) {
-    . $ConfigPath
-  }
-  else {
-    TerminateWithError -errorMessage "`"config.ps1`" is missing."
-  }
-}
-catch {
-  TerminateWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
 }
 
 $Defaults = @{
@@ -174,34 +199,6 @@ function Show-Help {
   Write-Host "`t$myCookies`n"
 }
 
-function TerminateWithError {
-  param(
-    [string]$errorMessage = "Error happened.`nEXIT",
-    [System.Exception]$exception
-  )
-
-  [console]::beep(1000, 100)
-  [console]::beep(1000, 100)
-  [console]::beep(1000, 100)
-  [console]::beep(1000, 1000)
-
-  if ($exception) {
-    $line = $_.InvocationInfo.ScriptLineNumber
-
-    if ($line) {
-      Write-Host "`n$errorMessage :`n`t$($exception.Message)`n`tLine: $line`nEXIT" -ForegroundColor Red
-    }
-    else {
-      Write-Host "`n$errorMessage :`n$($exception.Message)`nEXIT" -ForegroundColor Red
-    }
-  }
-  else {
-    Write-Host "ERROR`n" -ForegroundColor Red
-    Write-Host "   $errorMessage`n`nEXIT" -ForegroundColor Red
-  }
-
-  exit 1
-}
 
 function WriteTitle {
   param(
