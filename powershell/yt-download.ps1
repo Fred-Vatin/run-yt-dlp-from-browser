@@ -66,12 +66,12 @@ catch {
 # Don’t edit this part unless you know what you do.
 # Get default downloads dir for each platform
 if (-not $DownloadsPath) {
-  if ($PSVersionTable.Platform -eq "Win32NT") {
+  if ($IsWindows) {
     New-Variable -Name UserShellFolders -Value "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Option Constant
     New-Variable -Name downloadsKey -Value "{374DE290-123F-4565-9164-39C4925E467B}" -Option Constant
     New-Variable -Name DownloadsPath -Value ((Get-ItemProperty -Path $UserShellFolders -Name $downloadsKey).$downloadsKey) -Option Constant
   }
-  elseif ($PSVersionTable.Platform -eq "Unix") {
+  elseif ($IsLinux -or $IsMacOS) {
     New-Variable -Name DownloadsPath -Value (Join-Path -Path $HOME -ChildPath "Downloads") -Option Constant
   }
   else {
@@ -477,7 +477,6 @@ if ($url -and -not $install -and -not $uninstall) {
     }
   }
 
-
   <#*==========================================================================
   * ℹ		TEST DOWNLOAD DIR
   ===========================================================================#>
@@ -727,7 +726,6 @@ if ($url -and -not $install -and -not $uninstall) {
     & yt-dlp $options 2>&1 | Out-ColoredLog
   }
 
-
   <#*==========================================================================
   * ℹ		OPEN DOWNLOAD DIR
   ===========================================================================#>
@@ -773,19 +771,24 @@ if ($uninstall) {
   WriteTitle "UNINSTALL"
   Write-Host "Uninstalling ytdl protocol handler..."
 
-  try {
-    Remove-Item -Path "$ytdlKey" -Recurse -Force -ErrorAction SilentlyContinue
+  if ($IsWindows) {
+    try {
+      Remove-Item -Path "$ytdlKey" -Recurse -Force -ErrorAction SilentlyContinue
 
-    if (Test-Path -Path $ytdlKey) {
-      throw "$ytdlKey could NOT be deleted"
+      if (Test-Path -Path $ytdlKey) {
+        throw "$ytdlKey could NOT be deleted"
+      }
+      else {
+        Write-Host "$ytdlKey deleted from the registry" -ForegroundColor Yellow
+        Write-Host "`nSuccessfully uninstalled." -ForegroundColor Green
+      }
     }
-    else {
-      Write-Host "$ytdlKey deleted from the registry" -ForegroundColor Yellow
-      Write-Host "`nSuccessfully uninstalled." -ForegroundColor Green
+    catch {
+      TerminateWithError -errorMessage "Uninstall failed" -exception $_.Exception
     }
   }
-  catch {
-    TerminateWithError -errorMessage "Uninstall failed" -exception $_.Exception
+  else {
+    TerminateWithError -errorMessage "Sorry but this works only on Windows (for now)"
   }
 }
 
@@ -799,46 +802,53 @@ if ($install) {
   WriteTitle "INSTALL"
   Write-Host "Installing ytdl protocol handler...`n"
 
-  # Abort if yt-dlp is not found in path
-  Test-YtdlInstallation
+  if ($IsWindows) {
+    # Abort if yt-dlp is not found in path
+    Test-YtdlInstallation
 
-  $scriptPath = $PSCommandPath
-  Write-Host "Commands will be sent to:"
-  Write-Host "$scriptPath" -ForegroundColor Cyan
+    $scriptPath = $PSCommandPath
+    Write-Host "Commands will be sent to:"
+    Write-Host "$scriptPath" -ForegroundColor Cyan
 
-  $ytDlpPath = Get-YtdlPath
+    $ytDlpPath = Get-YtdlPath
 
-  try {
-    # Create or update ytdl registry key
-    New-Item -Path $ytdlKey -Force | Out-Null
-    Set-ItemProperty -Path $ytdlKey -Name "(Default)" -Value "URL:ytdl"
-    Set-ItemProperty -Path $ytdlKey -Name "URL Protocol" -Value ""
+    try {
+      # Create or update ytdl registry key
+      New-Item -Path $ytdlKey -Force | Out-Null
+      Set-ItemProperty -Path $ytdlKey -Name "(Default)" -Value "URL:ytdl"
+      Set-ItemProperty -Path $ytdlKey -Name "URL Protocol" -Value ""
 
-    Write-Host "`n$ytdlKey " -NoNewline -ForegroundColor Green
-    Write-Host "was added to the registry" -ForegroundColor Cyan
+      Write-Host "`n$ytdlKey " -NoNewline -ForegroundColor Green
+      Write-Host "was added to the registry" -ForegroundColor Cyan
 
 
-    # Configure DefaultIcon if yt-dlp is found
-    if ($ytdlpPath) {
-      New-Item -Path "$ytdlKey\DefaultIcon" -Force | Out-Null
-      Set-ItemProperty -Path "$ytdlKey\DefaultIcon" -Name "(Default)" -Value """$ytdlpPath"",1"
+      # Configure DefaultIcon if yt-dlp is found
+      if ($ytdlpPath) {
+        New-Item -Path "$ytdlKey\DefaultIcon" -Force | Out-Null
+        Set-ItemProperty -Path "$ytdlKey\DefaultIcon" -Name "(Default)" -Value """$ytdlpPath"",1"
 
-      Write-Host "`nIcon using " -NoNewline -ForegroundColor Cyan
-      Write-Host "$ytDlpPath " -NoNewline -ForegroundColor Green
+        Write-Host "`nIcon using " -NoNewline -ForegroundColor Cyan
+        Write-Host "$ytDlpPath " -NoNewline -ForegroundColor Green
+        Write-Host "succesfully added to the registry" -ForegroundColor Cyan
+      }
+
+      # Create shell\open\command key
+      New-Item -Path "$ytdlKey\shell\open\command" -Force | Out-Null
+      Set-ItemProperty -Path "$ytdlKey\shell\open\command" -Name "(Default)" -Value $command
+
+      Write-Host "`nCommand: " -NoNewline -ForegroundColor Cyan
+      Write-Host "$command " -NoNewline -ForegroundColor Green
       Write-Host "succesfully added to the registry" -ForegroundColor Cyan
+
+      Write-Host "`nINSTALLATION COMPLETE" -ForegroundColor Green
+    }
+    catch {
+      TerminateWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -Exception $_.Exception
     }
 
-    # Create shell\open\command key
-    New-Item -Path "$ytdlKey\shell\open\command" -Force | Out-Null
-    Set-ItemProperty -Path "$ytdlKey\shell\open\command" -Name "(Default)" -Value $command
-
-    Write-Host "`nCommand: " -NoNewline -ForegroundColor Cyan
-    Write-Host "$command " -NoNewline -ForegroundColor Green
-    Write-Host "succesfully added to the registry" -ForegroundColor Cyan
-
-    Write-Host "`nINSTALLATION COMPLETE" -ForegroundColor Green
   }
-  catch {
-    TerminateWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -Exception $_.Exception
+  else {
+    TerminateWithError -errorMessage "Sorry but this works only on Windows (for now)"
   }
+
 }
