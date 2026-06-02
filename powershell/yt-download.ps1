@@ -23,20 +23,34 @@ $ScriptVersion = "2.4.0"
 * ℹ                   DEFAULT VARIABLES
 ===========================================================================#>
 
-
-
 # Don’t edit this part unless you know what you do.
 # Get default downloads dir for each platform
-if ($PSVersionTable.Platform -eq "Win32NT") {
-  New-Variable -Name UserShellFolders -Value "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Option Constant
-  New-Variable -Name downloadsKey -Value "{374DE290-123F-4565-9164-39C4925E467B}" -Option Constant
-  New-Variable -Name downloadsPath -Value ((Get-ItemProperty -Path $UserShellFolders -Name $downloadsKey).$downloadsKey) -Option Constant
-}
-elseif ($PSVersionTable.Platform -eq "Unix") {
-  New-Variable -Name downloadsPath -Value (Join-Path -Path $HOME -ChildPath "Downloads") -Option Constant
+if (-not $DownloadsPath) {
+  if ($PSVersionTable.Platform -eq "Win32NT") {
+    New-Variable -Name UserShellFolders -Value "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Option Constant
+    New-Variable -Name downloadsKey -Value "{374DE290-123F-4565-9164-39C4925E467B}" -Option Constant
+    New-Variable -Name DownloadsPath -Value ((Get-ItemProperty -Path $UserShellFolders -Name $downloadsKey).$downloadsKey) -Option Constant
+  }
+  elseif ($PSVersionTable.Platform -eq "Unix") {
+    New-Variable -Name DownloadsPath -Value (Join-Path -Path $HOME -ChildPath "Downloads") -Option Constant
+  }
+  else {
+    Write-Host "ERROR`n" -ForegroundColor Red
+    Write-Host "`tUnknown OS :`n`tCan not get the default Download directory." -ForegroundColor Red
+    Write-Host "`n`tOpen an issue. You can try to set the DownloadsPath in your `"config.ps1`" file.`nEXIT" -ForegroundColor Red
+    exit 1
+  }
 }
 else {
-  TerminateWithError -errorMessage "Unknown OS"
+  # Check if the DownloadsPath set in config.ps1 exists
+  if (-not (Test-Path -Path $DownloadsPath -PathType Container)) {
+    Write-Host "ERROR`n" -ForegroundColor Red
+    Write-Host "`t`"$DownloadsPath`" :`n`tdoesn’t exist." -ForegroundColor Red
+    Write-Host "`n`tYou set a custom download path which is invalid in your `"config.ps1`" file.`nEXIT" -ForegroundColor Red
+    Write-Host "`tProvide a valid path or" -ForegroundColor Red
+    Write-Host "`ttry to comment the line to use default download dir for user.`nEXIT" -ForegroundColor Red
+    exit 1
+  }
 }
 
 #===========================================================================
@@ -80,7 +94,7 @@ foreach ($VarName in $Defaults.Keys) {
 }
 #===========================================================================
 
-New-Variable -Name directory -Value (Join-Path -Path "$downloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
+New-Variable -Name FullDownloadDir -Value (Join-Path -Path "$DownloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
 
 # This is the command triggered by the protocol
 # It open the Windows Terminal with the profile 'PowerShell 7' and this script with the given url
@@ -119,7 +133,7 @@ function Show-Help {
   Write-Host "`tUse this to open wiki at `"$repo`"`n"
   Write-Host "-install" -ForegroundColor Magenta
   Write-Host "`tUse this to register the custom protocol `"$protocol`://`" in the registry that will run this script with the parameter -url when called`n"
-  Write-Host "`tThe downloads directory will be `"$directory`" and must exist. Edit this script to customize.`n"
+  Write-Host "`tThe downloads directory will be `"$FullDownloadDir`" and must exist. Edit this script to customize.`n"
   Write-Host "-uninstall" -ForegroundColor Magenta
   Write-Host "`tUse this to unregister the custom protocol `"$protocol`://`" from the registry`n"
   Write-Host "-url" -ForegroundColor Magenta
@@ -147,7 +161,7 @@ function Show-Help {
   Write-Host "Edit this script to customize those paths."
   Write-Host "`"/`" as separator works also in Windows.`n"
   Write-Host "directory" -ForegroundColor Magenta
-  Write-Host "`t$directory`n"
+  Write-Host "`t$FullDownloadDir`n"
   Write-Host "UI_Path" -ForegroundColor Magenta
   Write-Host "`t$UI_Path`n"
   Write-Host "UseBrowserCookies (ignore \"myCookies\" if true)" -ForegroundColor Magenta
@@ -425,17 +439,31 @@ if ($url -and -not $install -and -not $uninstall) {
   ===========================================================================#>
   if ($parameters.ContainsKey('dldir')) {
     $global:DL_DIR = $($parameters['dldir'])
-  }
-  else {
-    $global:DL_DIR = $directory
-  }
 
-  # Test if download dir exists
-  if (Test-Path -Path $DL_DIR -PathType Container) {
-    Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
+    if (Test-Path -Path $DL_DIR -PathType Container) {
+      Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
+    }
+    else {
+      TerminateWithError -errorMessage "The DOWNLOAD_DIR set in yt-dlp userscript : `"$DL_DIR`" doesn’t exist."
+    }
   }
   else {
-    TerminateWithError -errorMessage "The $DL_DIR doesn’t exist."
+    $global:DL_DIR = $FullDownloadDir
+    if (Test-Path -Path $DL_DIR -PathType Container) {
+      Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
+    }
+    else {
+      Write-Host "`"$DL_DIR`" doesn’t exist. Let’s try to create it." -ForegroundColor Yellow
+
+      try {
+        # We use -Force to avoid errors if the folder already exists (optional if necessary)
+        $NewFolder = New-Item -Path $FullDownloadDir -ItemType Directory -ErrorAction Stop
+        Write-Host "Success: Folder created at `"$($NewFolder.FullName)`"" -ForegroundColor Green
+      }
+      catch {
+        TerminateWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -exception $_.Exception
+      }
+    }
   }
 
   $output = ""
@@ -618,7 +646,7 @@ if ($url -and -not $install -and -not $uninstall) {
     $optionsString = $optionsString -replace $pattern, $substitution
   }
 
-  if ($myCookies) {
+  if (($myCookies) -and (-not $UseBrowserCookies)) {
     $pattern = '--cookies\s+(.+?\.txt)'
     $substitution = '--cookies "$1"'
     $optionsString = $optionsString -replace $pattern, $substitution
