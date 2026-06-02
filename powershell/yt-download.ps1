@@ -58,7 +58,6 @@ $Defaults = @{
   autoAudio            = @("https://music.youtube.com/watch?v=")
   browserCookies       = "firefox"
   DownloadFolderName   = "yt-dlp"
-  jsRuntime            = "bun"
   myCookies            = ""
   SelectDownloadedFile = $true
   templateNameChannel  = "%(uploader)s - %(title)s.%(ext)s"
