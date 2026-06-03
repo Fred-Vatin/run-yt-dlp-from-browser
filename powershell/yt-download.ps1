@@ -11,7 +11,63 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.5.0-beta.4"
+$ScriptVersion = "2.5.0-beta.5"
+
+<#*==========================================================================
+* ℹ		FUNCTIONS THAT NEED PRIORITY
+===========================================================================#>
+function Play-Sound {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $false, Position = 0)]
+    [ValidateSet('Success', 'Error')]
+    [string]$Action
+  )
+
+  process {
+    # Fallback trigger flag
+    $useFallback = $false
+
+    if ($IsWindows -and -not [string]::IsNullOrEmpty($Action)) {
+      # Assign modern Windows 11 system sounds based on action
+      # Check the wav files in "C:\Windows\Media"
+      # For Success, try:
+      # chimes, Ring06, tada, Windows Background, Windows Exclamation, Windows Message Nudge, Windows Notify, Windows Notify System Generic, Windows Print complete
+      # For Error, try:
+      # ringout, Windows Ringout, chord, notify, Windows Ding, Windows Error
+      $wavFile = if ($Action -eq 'Success') { 'Windows Print complete' } else { 'notify' }
+      $wavPath = Join-Path -Path $env:WinDir -ChildPath "Media", $wavFile
+      $wavPath = [System.IO.Path]::ChangeExtension($wavPath, ".wav")
+
+      if (Test-Path $wavPath) {
+        try {
+          $player = New-Object System.Media.SoundPlayer($wavPath)
+          $player.Play()
+        }
+        catch {
+          $useFallback = $true
+        }
+      }
+      else {
+        $useFallback = $true
+      }
+    }
+    else {
+      # Trigger fallback if Unix or if no argument is passed
+      $useFallback = $true
+    }
+
+    # Global multiplatform fallback
+    if ($useFallback) {
+      try {
+        [System.Console]::Write([char]7)
+      }
+      catch {
+        Write-Debug "Audio alert not supported on this host: $_"
+      }
+    }
+  }
+}
 
 function TerminateWithError {
   param(
@@ -19,10 +75,9 @@ function TerminateWithError {
     [System.Exception]$exception
   )
 
-  [console]::beep(1000, 100)
-  [console]::beep(1000, 100)
-  [console]::beep(1000, 100)
-  [console]::beep(1000, 1000)
+  if ($PlaySound) {
+    Play-Sound -Action Error
+  }
 
   if ($exception) {
     $line = $_.InvocationInfo.ScriptLineNumber
@@ -56,10 +111,12 @@ try {
     . $ConfigPath
   }
   else {
+    Start-Process "https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/How-to-setup-and-use%E2%80%AF%3F"
     TerminateWithError -errorMessage "`"config.ps1`" is missing."
   }
 }
 catch {
+  Start-Process "https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/How-to-setup-and-use%E2%80%AF%3F"
   TerminateWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
 }
 
@@ -97,6 +154,7 @@ $Defaults = @{
   autoAudio            = @("https://music.youtube.com/watch?v=")
   browserCookies       = "firefox"
   DownloadFolderName   = "yt-dlp"
+  PlaySound            = $true
   SelectDownloadedFile = $true
   templateNameChannel  = "%(uploader)s - %(title)s.%(ext)s"
   templateNameTitle    = "%(title)s.%(ext)s"
@@ -119,6 +177,7 @@ foreach ($VarName in $Defaults.Keys) {
 }
 
 $myCookies = ""
+
 #===========================================================================
 
 New-Variable -Name FullDownloadDir -Value (Join-Path -Path "$DownloadsPath" -ChildPath "$DownloadFolderName") -Option Constant
@@ -448,6 +507,49 @@ if ($url -and -not $install -and -not $uninstall) {
 
   Test-FFmpegInstallation
 
+
+  <#*==========================================================================
+  * ℹ		TEST DOWNLOAD DIR
+  ===========================================================================#>
+  if ($parameters.ContainsKey('dldir')) {
+    $script:DL_DIR = $($parameters['dldir'])
+
+    if (Test-Path -Path $DL_DIR -PathType Container) {
+      Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
+    }
+    else {
+      TerminateWithError -errorMessage "The DOWNLOAD_DIR set in yt-dlp userscript : `"$DL_DIR`" doesn’t exist."
+    }
+  }
+  else {
+    $script:DL_DIR = $FullDownloadDir
+    if (Test-Path -Path $DL_DIR -PathType Container) {
+      Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
+    }
+    else {
+      Write-Host "`"$DL_DIR`" " -ForegroundColor Yellow
+      Write-Host "doesn’t exist. Let’s try to create it."
+
+      try {
+        # We use -Force to avoid errors if the folder already exists (optional if necessary)
+        $NewFolder = New-Item -Path $FullDownloadDir -ItemType Directory -ErrorAction Stop
+        Write-Host " Success: Folder created at `"$($NewFolder.FullName)`"`n" -ForegroundColor Green
+      }
+      catch {
+        TerminateWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -exception $_.Exception
+      }
+    }
+  }
+
+  $output = ""
+
+  if ($useTitle) {
+    $output = $DL_DIR + "/" + $templateNameTitle
+  }
+  else {
+    $output = $DL_DIR + "/" + $templateNameChannel
+  }
+
   <#*==========================================================================
   * ℹ		TEST URL to download
   ===========================================================================#>
@@ -475,47 +577,6 @@ if ($url -and -not $install -and -not $uninstall) {
         Write-Host "`tVideo will be used because no audio pattern detected in URL."
       }
     }
-  }
-
-  <#*==========================================================================
-  * ℹ		TEST DOWNLOAD DIR
-  ===========================================================================#>
-  if ($parameters.ContainsKey('dldir')) {
-    $script:DL_DIR = $($parameters['dldir'])
-
-    if (Test-Path -Path $DL_DIR -PathType Container) {
-      Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
-    }
-    else {
-      TerminateWithError -errorMessage "The DOWNLOAD_DIR set in yt-dlp userscript : `"$DL_DIR`" doesn’t exist."
-    }
-  }
-  else {
-    $script:DL_DIR = $FullDownloadDir
-    if (Test-Path -Path $DL_DIR -PathType Container) {
-      Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
-    }
-    else {
-      Write-Host "`"$DL_DIR`" doesn’t exist. Let’s try to create it." -ForegroundColor Yellow
-
-      try {
-        # We use -Force to avoid errors if the folder already exists (optional if necessary)
-        $NewFolder = New-Item -Path $FullDownloadDir -ItemType Directory -ErrorAction Stop
-        Write-Host "Success: Folder created at `"$($NewFolder.FullName)`"" -ForegroundColor Green
-      }
-      catch {
-        TerminateWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -exception $_.Exception
-      }
-    }
-  }
-
-  $output = ""
-
-  if ($useTitle) {
-    $output = $DL_DIR + "/" + $templateNameTitle
-  }
-  else {
-    $output = $DL_DIR + "/" + $templateNameChannel
   }
 
   <#*==========================================================================
@@ -815,8 +876,9 @@ public static extern void CoTaskMemFree(IntPtr pv);
       }
     }
 
-    # Play a beep to notify
-    [console]::beep(650, 1000)
+    if ($PlaySound) {
+      Play-Sound -Action Success
+    }
 
     WriteTitle "SCRIPT ENDED WITH NO ERROR"
 
