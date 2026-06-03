@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.5.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.4.0...v2.5.0) (2026-06-03)
+
+
+### 🚀 Features
+
+* add colorful output option and enhance logging for download progress ([692b896](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/692b896b42f23d29aae26e402e9d09b73d542be0))
+* add sound notifications for success and error events ([45635b6](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/45635b699654cd308f780ec1f59f8d8cd7abc38e))
+* enhance metadata handling by adding support for title replacement in options ([1507011](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/15070118a3ca4947610cc658da0aabfbbf1c0d6e))
+* enhance metadata handling by replacing invalid characters in video titles ([294d6e7](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/294d6e772e958a86745302e8839e25aba9f8808e))
+* enhance UTF-8 encoding support in output ([10201af](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/10201af46476178183a42d23fb36ca6a0cdcc09a))
+* improve download path handling and error reporting in yt-download.ps1 ([cf190ca](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/cf190ca9f2026d20353550f9149080469d04b47d))
+* smartly open and select downloaded files in any file manager (Windows only) ([c8eb2d6](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/c8eb2d69df3b1b78f0b9c014fa61f9310fc67720))
+
+
+### 🐞 Bug Fixes
+
+* move myCookies variable initialization to maintain scope and improve cookie handling logic ([a176a48](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/a176a484030a507fc5aa800a85793229c8c32fd0)), closes [#18](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/issues/18)
+* prevent -install or -uninstall on platforms other than Windows ([5f89c48](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/5f89c4808c07c3a63771497f295ddfc5f7ed4b23))
+* TerminateWithError was called too late and user config was check too late also ([d8c6afa](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/d8c6afa742d01617e7e5280b7b796fb9f57814c2)), closes [#21](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/issues/21)
+
+
+### ✨ Polish
+
+* replace $global with $script to avoid global session pollution ([bdd4cf7](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/bdd4cf77d053a636fca24829c057b4d7ea864c25))
+
 ## [2.4.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.3.0...v2.4.0) (2026-05-31)
 
 
