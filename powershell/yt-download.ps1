@@ -626,6 +626,57 @@ if ($url -and -not $install -and -not $uninstall) {
   }
 
   <#*==========================================================================
+  * ℹ		Handle select downloaded file in Windows
+  ===========================================================================#>
+  if ($IsWindows) {
+    # Définition de l'API Windows native via C#
+    $Win32Signature = @'
+[DllImport("shell32.dll", ExactSpelling = true)]
+public static extern int SHParseDisplayName([MarshalAs(UnmanagedType.LPWStr)] string pszName, IntPtr pbc, out IntPtr ppidl, uint sfgaoIn, out uint psfgaoOut);
+
+[DllImport("shell32.dll", ExactSpelling = true)]
+public static extern int SHOpenFolderAndSelectItems(IntPtr pidlFolder, uint cidl, IntPtr[] apidl, uint dwFlags);
+
+[DllImport("ole32.dll", ExactSpelling = true)]
+public static extern void CoTaskMemFree(IntPtr pv);
+'@
+
+    $ShUtils = Add-Type -MemberDefinition $Win32Signature -Name "ShellUtils" -Namespace "Win32API" -PassThru
+
+    function Show-InFileManager {
+      param (
+        [string]$FilePath
+      )
+
+      $AbsolutePath = (Resolve-Path -Path $FilePath -ErrorAction Stop).Path
+
+      # 1. Obtenir le PIDL (Pointer to an Item ID List) du fichier ciblé
+      $Pidl = [IntPtr]::Zero
+      $SfgaoOut = 0
+      $Result = $ShUtils::SHParseDisplayName($AbsolutePath, [IntPtr]::Zero, [ref]$Pidl, 0, [ref]$SfgaoOut)
+
+      if ($Result -eq 0 -and $Pidl -ne [IntPtr]::Zero) {
+        try {
+          # 2. Appeler l'API native.
+          # En passant le PIDL du fichier en premier argument et 0 en nombre d'éléments enfants,
+          # Windows (ou DOpus via interception) ouvre le dossier parent et sélectionne le fichier.
+          [void]$ShUtils::SHOpenFolderAndSelectItems($Pidl, 0, $null, 0)
+        }
+        finally {
+          # 3. Libérer la mémoire managée requise par l'API COM/Shell
+          if ($Pidl -ne [IntPtr]::Zero) {
+            $ShUtils::CoTaskMemFree($Pidl)
+          }
+        }
+      }
+      else {
+        # Sécurité si l'API échoue : retour à la méthode basique
+        Start-Process explorer.exe -ArgumentList "/select,`"$AbsolutePath`""
+      }
+    }
+  }
+
+  <#*==========================================================================
   * ℹ		BUILD COMMAND TO RUN
   ===========================================================================#>
   Write-Host "`nCOMMAND:" -ForegroundColor Cyan
@@ -647,10 +698,6 @@ if ($url -and -not $install -and -not $uninstall) {
     # escape every pwsh chars in title
     $options += @("--replace-in-metadata", "title", '&', "and")
     $options += @("--replace-in-metadata", "title", '\|', "-")
-  }
-
-  if ($SelectDownloadedFile -and -not $IsTest) {
-    $options += @("--exec", 'pwsh -NoProfile -NonInteractive -Command "Start-Process explorer.exe -ArgumentList \"/select,`\"{}`\"\""')
   }
 
   if ($IsTest) {
@@ -711,6 +758,16 @@ if ($url -and -not $install -and -not $uninstall) {
     $optionsString = $optionsString -replace $pattern, $substitution -replace ',\s+', ','
   }
 
+  if ($SelectDownloadedFile -and -not $IsTest -and $IsWindows) {
+    # 1. Generate a unique temporary file path
+    $TempPathFile = [System.IO.Path]::GetTempFileName()
+
+    # 2. We use --exec to write the downloaded file path to our temporary file
+    $options += @(
+      "--exec", "pwsh -NoProfile -NonInteractive -Command `"Out-File -FilePath '$TempPathFile' -InputObject '{}' -Encoding utf8`""
+    )
+  }
+
   if ($debug) {
     Write-Host "`$options: $options`n" -ForegroundColor Cyan
     Write-Host "`$optionsString: $optionsString`n" -ForegroundColor Yellow
@@ -732,7 +789,23 @@ if ($url -and -not $install -and -not $uninstall) {
   if ($LASTEXITCODE -eq 0) {
 
     if (-not $IsTest) {
-      Write-Host "`nOPEN OUTPUT DIRECTORY" -ForegroundColor Cyan
+
+      if ($IsWindows -and $SelectDownloadedFile) {
+
+        Write-Host "`nOPEN OUTPUT DIRECTORY" -ForegroundColor Cyan
+
+        # Retrieve downloaded file path after execution
+        if (Test-Path $TempPathFile) {
+          $DownloadedFilePath = (Get-Content -Path $TempPathFile -Raw).Trim()
+          Remove-Item -Path $TempPathFile -ErrorAction SilentlyContinue
+          Write-Host "DownloadedFilePath : `"$DownloadedFilePath`"" -ForegroundColor Yellow
+        }
+
+        # Apply file selection logic
+        if ($DownloadedFilePath) {
+          Show-InFileManager -FilePath $DownloadedFilePath
+        }
+      }
     }
 
     # Play a beep to notify
