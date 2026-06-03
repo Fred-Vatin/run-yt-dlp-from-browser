@@ -11,7 +11,7 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.5.0-beta.3"
+$ScriptVersion = "2.5.0-beta.4"
 
 function TerminateWithError {
   param(
@@ -693,6 +693,9 @@ public static extern void CoTaskMemFree(IntPtr pv);
   }
 
   if (-not $IsTest) {
+    # Important for the function Out-ColoredLog
+    $options += @("--encoding", "utf-8")
+
     # If video title contains a dot as last character, delete it
     $options += @("--replace-in-metadata", "title", '\.$', "")
     # escape every pwsh chars in title
@@ -780,6 +783,10 @@ public static extern void CoTaskMemFree(IntPtr pv);
     & yt-dlp $options
   }
   else {
+    # If we don’t set everything in utf-8, the $InputObject from pipeline will be corrupted
+    # Check https://github.com/PowerShell/PowerShell/issues/25698#issuecomment-4599829781
+    [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+
     & yt-dlp $options 2>&1 | Out-ColoredLog
   }
 
