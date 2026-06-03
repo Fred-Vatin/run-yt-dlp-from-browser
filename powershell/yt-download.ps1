@@ -11,7 +11,7 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
-$ScriptVersion = "2.5.0-beta.5"
+$ScriptVersion = "2.5.0"
 
 <#*==========================================================================
 * ℹ		FUNCTIONS THAT NEED PRIORITY
