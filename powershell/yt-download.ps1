@@ -79,12 +79,41 @@ function TerminateWithError {
     Play-Sound -Action Error
   }
 
-  if ($ErrorRecord) {
-    Write-Host "`n  $ErrorMessage  `n" -BackgroundColor DarkRed -ForegroundColor White
+  # Repeats the character 50 times to create a separator line
+  $Line = '-' * 50
 
-    # Step 1: Display primary exception
+  if ($ErrorRecord) {
+    Write-Host "`n$Line" -ForegroundColor Red
+    Write-Host "`t❌  $ErrorMessage  ❌" -ForegroundColor Red
+    Write-Host "$Line" -ForegroundColor Red
+
+
+    # Step 1: Display primary exception with target command name if available
     $currentException = $ErrorRecord.Exception
     $primaryLine = $ErrorRecord.InvocationInfo.ScriptLineNumber
+
+    $invocationName = $null
+    if ($ErrorRecord.InvocationInfo) {
+      if ($ErrorRecord.InvocationInfo.InvocationName) {
+        $invocationName = $ErrorRecord.InvocationInfo.InvocationName
+      }
+      elseif ($ErrorRecord.InvocationInfo.MyCommand) {
+        $invocationName = $ErrorRecord.InvocationInfo.MyCommand.Name
+      }
+    }
+
+    # Fallback for primary ActionPreferenceStopException to catch the root cmdlet name
+    if (-not $invocationName -and $ErrorRecord.Exception -and $ErrorRecord.Exception.PSObject.Properties['ErrorRecord']) {
+      $nestedRecord = $ErrorRecord.Exception.ErrorRecord
+      if ($nestedRecord -and $nestedRecord.InvocationInfo) {
+        if ($nestedRecord.InvocationInfo.MyCommand) {
+          $invocationName = $nestedRecord.InvocationInfo.MyCommand.Name
+        }
+        elseif ($nestedRecord.InvocationInfo.InvocationName) {
+          $invocationName = $nestedRecord.InvocationInfo.InvocationName
+        }
+      }
+    }
 
     if ($primaryLine) {
       Write-Host "Error at line: $primaryLine" -ForegroundColor Red
@@ -92,17 +121,60 @@ function TerminateWithError {
 
     $lastMessage = $null
     if ($currentException) {
-      Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      # Prefix the command name to match native PowerShell behavior
+      if ($invocationName) {
+        Write-Host "${invocationName}: " -NoNewline
+        Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      }
+      else {
+        Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      }
       $lastMessage = $currentException.Message
     }
 
     # Step 2: Traverse inner exceptions with deduplication logic
     while ($currentException.InnerException) {
+      $parentException = $currentException
       $currentException = $currentException.InnerException
 
       $innerLine = $null
-      if ($currentException.ErrorRecord -and $currentException.ErrorRecord.InvocationInfo) {
-        $innerLine = $currentException.ErrorRecord.InvocationInfo.ScriptLineNumber
+      $innerTargetCommand = $null
+
+      # Prioritize custom attached PSErrorRecord because it contains the rich catch-block context
+      $targetRecord = $null
+      if ($parentException -and $parentException.PSObject.Properties['PSErrorRecord']) {
+        $targetRecord = $parentException.PSErrorRecord
+      }
+      elseif ($currentException.PSObject.Properties['PSErrorRecord']) {
+        $targetRecord = $currentException.PSErrorRecord
+      }
+      elseif ($currentException.ErrorRecord) {
+        $targetRecord = $currentException.ErrorRecord
+      }
+
+      if ($targetRecord) {
+        if ($targetRecord.InvocationInfo) {
+          $innerLine = $targetRecord.InvocationInfo.ScriptLineNumber
+          if ($targetRecord.InvocationInfo.MyCommand) {
+            $innerTargetCommand = $targetRecord.InvocationInfo.MyCommand.Name
+          }
+          elseif ($targetRecord.InvocationInfo.InvocationName) {
+            $innerTargetCommand = $targetRecord.InvocationInfo.InvocationName
+          }
+        }
+
+        # Fallback for ActionPreferenceStopException where the actual cmdlet name is inside the exception's own ErrorRecord
+        if (-not $innerTargetCommand -and $targetRecord.Exception -and $targetRecord.Exception.PSObject.Properties['ErrorRecord']) {
+          $nestedRecord = $targetRecord.Exception.ErrorRecord
+          if ($nestedRecord -and $nestedRecord.InvocationInfo) {
+            if ($nestedRecord.InvocationInfo.MyCommand) {
+              $innerTargetCommand = $nestedRecord.InvocationInfo.MyCommand.Name
+            }
+            elseif ($nestedRecord.InvocationInfo.InvocationName) {
+              $innerTargetCommand = $nestedRecord.InvocationInfo.InvocationName
+            }
+          }
+        }
       }
 
       # Deduplicate: skip if the message is identical and provides no new line context
@@ -115,21 +187,37 @@ function TerminateWithError {
         Write-Host "Error at line: $innerLine" -ForegroundColor Red
       }
 
-      Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      if ($innerTargetCommand) {
+        Write-Host "${innerTargetCommand}: " -NoNewline
+        Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      }
+      else {
+        Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      }
       $lastMessage = $currentException.Message
     }
 
-    Write-Host "`n  EXIT  " -BackgroundColor DarkRed -ForegroundColor White
+    # Step 3: Display the script call stack to expose the calling function context
+    if ($ErrorRecord.ScriptStackTrace) {
+      Write-Host "`nScript Call Stack:" -ForegroundColor DarkGray
+      $ErrorRecord.ScriptStackTrace -split "`r?`n" | Where-Object { $_.Trim() } | ForEach-Object {
+        Write-Host "  $_" -ForegroundColor Gray
+      }
+    }
+
+    Write-Host "`nEXIT  " -ForegroundColor Red
   }
   else {
-    Write-Host "`n  ERROR  `n" -BackgroundColor DarkRed -ForegroundColor White
+    Write-Host "`n$Line" -ForegroundColor Red
+    Write-Host "`t❌  ERROR  ❌" -ForegroundColor Red
+    Write-Host "$Line" -ForegroundColor Red
+
     Write-Host "$ErrorMessage" -ForegroundColor Yellow
-    Write-Host "`n  EXIT  " -BackgroundColor DarkRed -ForegroundColor White
+    Write-Host "`nEXIT  " -ForegroundColor Red
   }
 
   exit 1
 }
-
 <#*==========================================================================
 *	ℹ		PARAMETERS
 
@@ -772,15 +860,13 @@ public static extern void CoTaskMemFree(IntPtr pv);
         }
         catch {
           # Pass $_.Exception as the InnerException to preserve the original root cause
-          $exception = [System.Management.Automation.RuntimeException]::new("File manager failed to open.", $_.Exception)
-          $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-            $exception,
-            "FileManagerError",
-            [System.Management.Automation.ErrorCategory]::NotSpecified,
-            $null
-          )
+          $innerException = $_.Exception
+          $outerException = New-Object System.Reflection.TargetInvocationException("File manager failed to open.", $innerException)
 
-          $PSCmdlet.ThrowTerminatingError($errorRecord)
+          # Attach the original ErrorRecord to the exception to preserve PowerShell context
+          Add-Member -InputObject $outerException -NotePropertyName "PSErrorRecord" -NotePropertyValue $_
+
+          throw $outerException
         }
       }
 
