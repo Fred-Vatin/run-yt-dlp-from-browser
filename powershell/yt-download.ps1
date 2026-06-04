@@ -73,7 +73,7 @@ function Play-Sound {
   }
 }
 
-function TerminateWithError {
+function Stop-ScriptWithError {
   param (
     [string]$ErrorMessage = "Error happened",
     [System.Management.Automation.ErrorRecord]$ErrorRecord
@@ -284,12 +284,12 @@ try {
   }
   else {
     Start-Process "https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/How-to-setup-and-use%E2%80%AF%3F"
-    TerminateWithError -errorMessage "`"config.ps1`" is missing."
+    Stop-ScriptWithError -errorMessage "`"config.ps1`" is missing."
   }
 }
 catch {
   Start-Process "https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/How-to-setup-and-use%E2%80%AF%3F"
-  TerminateWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
+  Stop-ScriptWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
 }
 
 # Don’t edit this part unless you know what you do.
@@ -305,7 +305,7 @@ Can not get the user default Download directory.
 Run the script in debug mode and open an issue.
 You can try to set the DownloadsPath in your `"config.ps1`" file.
 "@
-    TerminateWithError -ErrorMessage "$Local:ErrorMessage"
+    Stop-ScriptWithError -ErrorMessage "$Local:ErrorMessage"
   }
 }
 else {
@@ -317,7 +317,7 @@ You set a "DownloadsPath" which is invalid in your `"config.ps1`" file
 Provide a valid path or
 try to comment the line to use the user default Download directory.
 "@
-    TerminateWithError -ErrorMessage "$Local:ErrorMessage"
+    Stop-ScriptWithError -ErrorMessage "$Local:ErrorMessage"
   }
 }
 
@@ -451,7 +451,7 @@ function Test-AdminPrivileges {
 
 function Test-YtdlInstallation {
   if (-not (Get-Command yt-dlp -ErrorAction SilentlyContinue)) {
-    TerminateWithError -errorMessage "yt-dlp is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command"
+    Stop-ScriptWithError -errorMessage "yt-dlp is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command"
   }
 }
 
@@ -475,7 +475,7 @@ function Get-YtdlPath {
 
 function Test-FFmpegInstallation {
   if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
-    TerminateWithError -errorMessage "FFmpeg is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command."
+    Stop-ScriptWithError -errorMessage "FFmpeg is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command."
   }
 }
 
@@ -615,7 +615,7 @@ if ($url -and -not $install -and -not $uninstall) {
       $queryString = $url.Substring($startIndex)
     }
     else {
-      TerminateWithError -errorMessage "Expected URL must start with: \"${protocol}:?\"`n   However URL is: $url"
+      Stop-ScriptWithError -errorMessage "Expected URL must start with: \"${protocol}:?\"`n   However URL is: $url"
     }
 
     # Init hashtable to stock parameters
@@ -657,12 +657,12 @@ if ($url -and -not $install -and -not $uninstall) {
       $script:TYPE = $($parameters['type'])
     }
     else {
-      TerminateWithError -errorMessage "[type] parameter is missing. It is required to tell yt-dlp what streams he has to download."
+      Stop-ScriptWithError -errorMessage "[type] parameter is missing. It is required to tell yt-dlp what streams he has to download."
     }
 
   }
   catch {
-    TerminateWithError -errorMessage "Error while processing URL" -ErrorRecord $_
+    Stop-ScriptWithError -errorMessage "Error while processing URL" -ErrorRecord $_
   }
 
   <#*==========================================================================
@@ -709,7 +709,7 @@ if ($url -and -not $install -and -not $uninstall) {
         Write-Host " Success: Folder created at `"$($NewFolder.FullName)`"`n" -ForegroundColor Green
       }
       catch {
-        TerminateWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -ErrorRecord $_
+        Stop-ScriptWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -ErrorRecord $_
       }
     }
   }
@@ -731,7 +731,7 @@ if ($url -and -not $install -and -not $uninstall) {
     $script:DL_URL = $($parameters['url'])
   }
   else {
-    TerminateWithError -errorMessage "[url] parameter is missing. It is required to tell yt-dlp the download source."
+    Stop-ScriptWithError -errorMessage "[url] parameter is missing. It is required to tell yt-dlp the download source."
   }
 
   # handle auto
@@ -839,7 +839,7 @@ if ($url -and -not $install -and -not $uninstall) {
         exit
       }
       else {
-        TerminateWithError -errorMessage "Can not find $UI_Path"
+        Stop-ScriptWithError -errorMessage "Can not find $UI_Path"
       }
     }
   }
@@ -1061,11 +1061,11 @@ public static extern void CoTaskMemFree(IntPtr pv);
             Show-InFileManager -FilePath $DownloadedFilePath
           }
           catch {
-            TerminateWithError -ErrorMessage "Show-InFileManager failed" -ErrorRecord $_
+            Stop-ScriptWithError -ErrorMessage "Show-InFileManager failed" -ErrorRecord $_
           }
         }
         else {
-          TerminateWithError '$DownloadedFilePath was not find in $TempPathFile'
+          Stop-ScriptWithError '$DownloadedFilePath was not find in $TempPathFile'
         }
       }
     }
@@ -1079,7 +1079,7 @@ public static extern void CoTaskMemFree(IntPtr pv);
   }
   else {
     WriteTitle "SCRIPT ENDED WITH ERROR" -ForegroundColor Red
-    TerminateWithError -errorMessage "yt-dlp terminate with error"
+    Stop-ScriptWithError -errorMessage "yt-dlp terminate with error"
   }
 
   # Read-Host -Prompt "Press Enter to exit"
@@ -1120,11 +1120,11 @@ if ($uninstall) {
       }
     }
     catch {
-      TerminateWithError -errorMessage "Uninstall failed" -exception $_.Exception
+      Stop-ScriptWithError -errorMessage "Uninstall failed" -exception $_.Exception
     }
   }
   else {
-    TerminateWithError -errorMessage "Sorry but this works only on Windows (for now)"
+    Stop-ScriptWithError -errorMessage "Sorry but this works only on Windows (for now)"
   }
 }
 
@@ -1179,12 +1179,12 @@ if ($install) {
       Write-Host "`nINSTALLATION COMPLETE" -ForegroundColor Green
     }
     catch {
-      TerminateWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -ErrorRecord $_
+      Stop-ScriptWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -ErrorRecord $_
     }
 
   }
   else {
-    TerminateWithError -errorMessage "Sorry but this works only on Windows (for now)"
+    Stop-ScriptWithError -errorMessage "Sorry but this works only on Windows (for now)"
   }
 
 }
