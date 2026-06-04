@@ -1,21 +1,23 @@
+[CmdletBinding()]
 param(
-  [switch]$install,
-  [switch]$uninstall,
-  [switch]$help,
-  [switch]$man,
-  [switch]$version,
-  [string]$url,
-  [switch]$debug
+  [switch]$Install,
+  [switch]$Uninstall,
+  [switch]$Version,
+  [string]$Url,
+  [switch]$Help,
+  [switch]$Man
 )
+
+$ScriptVersion = "2.5.0"
+
+<#*==========================================================================
+*	ℹ		PARAMETERS
+
+  Run the script with the -Help parameter to know how to use it
+  ===========================================================================#>
 
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
-
-# Uncomment to display the debug message
-# $DebugPreference = 'Continue'
-
-
-$ScriptVersion = "2.5.0"
 
 <#*==========================================================================
 * ℹ		FUNCTIONS THAT NEED PRIORITY
@@ -67,7 +69,7 @@ function Play-Sound {
         [System.Console]::Write([char]7)
       }
       catch {
-        Write-Debug "Audio alert not supported on this host: $_"
+        Write-Verbose "Audio alert not supported on this host: $_"
       }
     }
   }
@@ -233,47 +235,43 @@ function Get-OSDownloadPath {
   $rawPath = $null
   $downloadsPath = $null
 
-  Write-Debug "Get-OSDownloadPath starting…"
+  Write-Verbose "Get-OSDownloadPath starting…"
 
   if ($IsWindows) {
-    Write-Debug "Operating System detected: Windows"
+    Write-Verbose "Operating System detected: Windows"
     $registryPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
     $guidKey = "{374DE290-123F-4565-9164-39C4925E467B}"
 
     if (Test-Path -Path $registryPath) {
       $rawPath = (Get-ItemPropertyValue -Path $registryPath -Name $guidKey -ErrorAction SilentlyContinue)
-      Write-Debug "Registry raw value retrieved: $rawPath"
+      Write-Verbose "Registry raw value retrieved: $rawPath"
 
       if ($rawPath) {
         $downloadsPath = [Environment]::ExpandEnvironmentVariables($rawPath)
-        Write-Debug "Expanded environment variables path: $downloadsPath"
+        Write-Verbose "Expanded environment variables path: $downloadsPath"
       }
     }
   }
   elseif ($IsLinux -or $IsMacOS) {
-    Write-Debug "Operating System detected: Linux/MacOS"
+    Write-Verbose "Operating System detected: Linux/MacOS"
     $downloadsPath = Join-Path -Path $HOME -ChildPath "Downloads"
   }
 
   if (-not $downloadsPath) {
-    Write-Debug "No download path resolved yet. Falling back to default user profile subfolder."
+    Write-Verbose "No download path resolved yet. Falling back to default user profile subfolder."
     $downloadsPath = Join-Path -Path $HOME -ChildPath "Downloads"
   }
 
-  Write-Debug "Checking if path exists physically: $downloadsPath"
   if ($downloadsPath -and (Test-Path -Path $downloadsPath -PathType Container)) {
-    Write-Debug "Path exists and is valid."
+    Write-Verbose "Path exists and is valid."
     return $downloadsPath
   }
 
-  Write-Debug "Path does not exist or is invalid. Returning `$null`."
+  Write-Verbose "Path does not exist or is invalid. Returning `$null`."
   return $null
 }
-<#*==========================================================================
-*	ℹ		PARAMETERS
 
-  Run the script with the -help parameter to know how to use it
-=============================================================================
+<# =============================================================================
 * ℹ                   DEFAULT VARIABLES
 ===========================================================================#>
 # import user config
@@ -284,12 +282,12 @@ try {
   }
   else {
     Start-Process "https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/How-to-setup-and-use%E2%80%AF%3F"
-    Stop-ScriptWithError -errorMessage "`"config.ps1`" is missing."
+    Stop-ScriptWithError -ErrorMessage "`"config.ps1`" is missing."
   }
 }
 catch {
   Start-Process "https://github.com/Fred-Vatin/run-yt-dlp-from-browser/wiki/How-to-setup-and-use%E2%80%AF%3F"
-  Stop-ScriptWithError -errorMessage "`"config.ps1`" is missing or can not be loaded."
+  Stop-ScriptWithError -ErrorMessage "`"config.ps1`" is missing or can not be loaded."
 }
 
 # Don’t edit this part unless you know what you do.
@@ -302,7 +300,7 @@ if (-not $DownloadsPath) {
   if (-not $DownloadsPath) {
     $Local:ErrorMessage = @"
 Can not get the user default Download directory.
-Run the script in debug mode and open an issue.
+Run the script with "-Verbose" and open an issue.
 You can try to set the DownloadsPath in your `"config.ps1`" file.
 "@
     Stop-ScriptWithError -ErrorMessage "$Local:ErrorMessage"
@@ -337,16 +335,22 @@ $Defaults = @{
   videoQuality         = "best"
 }
 
+Write-Verbose "`nCHECK CONFIG VARIABLES"
 foreach ($VarName in $Defaults.Keys) {
   if (-not (Get-Variable -Name $VarName -ErrorAction SilentlyContinue)) {
     # Required variable is missing in config.ps1, let’s create it here with the default value
     New-Variable -Name $VarName -Value $Defaults[$VarName] -Option Constant -Confirm:$false
     Write-Host
-    Write-Warning "Variable '$VarName' is missing in your `"config.ps1`". We will use the fallback value: `"$($Defaults[$VarName])`""
+    Write-Warning "Variable '$VarName'`tis missing in your `"config.ps1`". We will use the fallback value: `"$($Defaults[$VarName])`""
     Write-Host
   }
   else {
-    Write-Debug "Variable $VarName defined in `"config.ps1`" with value $((Get-Variable -Name $VarName).Value)" 
+    $Local:VerboseMessage = @"
+Variable Name:`t$VarName
+Value:`t`t$((Get-Variable -Name $VarName).Value)
+Defined in `"config.ps1`"
+"@
+    Write-Verbose "`n$VerboseMessage"
   }
 }
 
@@ -374,12 +378,12 @@ New-Variable -Name IsTest -Value $false
 ===========================================================================#>
 function Show-Version {
   Write-Host ""
-  Write-Host "yt-download" -ForegroundColor Yellow
-  Write-Host "Version : " -NoNewline
+  Write-Host "Script Name : " -NoNewline
+  Write-Host "$(Split-Path -Path $PSCommandPath -Leaf)" -ForegroundColor Cyan
+  Write-Host "Version     : " -NoNewline
   Write-Host "$ScriptVersion" -ForegroundColor Green
   Write-Host ""
 }
-
 
 # Display help message with specified formatting
 function Show-Help {
@@ -387,16 +391,20 @@ function Show-Help {
   Write-Host ""
   Write-Host "ℹ`tPARAMETERS" -ForegroundColor Magenta
   Write-Host "========================`n" -ForegroundColor Magenta
-  Write-Host "-help" -ForegroundColor Magenta
+  Write-Host "-Version" -ForegroundColor Magenta
+  Write-Host "`tShow script version`n"
+  Write-Host "-Help" -ForegroundColor Magenta
   Write-Host "`tOpen this help (default)`n"
-  Write-Host "-man" -ForegroundColor Magenta
+  Write-Host "-Man" -ForegroundColor Magenta
   Write-Host "`tUse this to open wiki at `"$repo`"`n"
-  Write-Host "-install" -ForegroundColor Magenta
+  Write-Host "-Verbose" -ForegroundColor Magenta
+  Write-Host "`tWill display debug messages`n"
+  Write-Host "-Install" -ForegroundColor Magenta
   Write-Host "`tUse this to register the custom protocol `"$protocol`://`" in the registry that will run this script with the parameter -url when called`n"
   Write-Host "`tThe downloads directory will be `"$FullDownloadDir`" and must exist. Edit this script to customize.`n"
-  Write-Host "-uninstall" -ForegroundColor Magenta
+  Write-Host "-Uninstall" -ForegroundColor Magenta
   Write-Host "`tUse this to unregister the custom protocol `"$protocol`://`" from the registry`n"
-  Write-Host "-url" -ForegroundColor Magenta
+  Write-Host "-Url" -ForegroundColor Magenta
   Write-Host "`tThis url is parsed and can contain those parameters:"
   Write-Host "`n`t- type [string] (required)" -ForegroundColor Cyan
   Write-Host "`t`t`"auto`"`n`t`t`tif the url to download is detected as audio, download best audio"
@@ -432,7 +440,6 @@ function Show-Help {
   Write-Host "`t$myCookies`n"
 }
 
-
 function WriteTitle {
   param(
     [Parameter(Mandatory = $true)]
@@ -454,7 +461,7 @@ function Test-AdminPrivileges {
 
 function Test-YtdlInstallation {
   if (-not (Get-Command yt-dlp -ErrorAction SilentlyContinue)) {
-    Stop-ScriptWithError -errorMessage "yt-dlp is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command"
+    Stop-ScriptWithError -ErrorMessage "yt-dlp is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command"
   }
 }
 
@@ -473,12 +480,11 @@ function Get-YtdlPath {
     Write-Host "Yt-dlp path was not found" -ForegroundColor Yellow
     return $false
   }
-
 }
 
 function Test-FFmpegInstallation {
   if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
-    Stop-ScriptWithError -errorMessage "FFmpeg is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command."
+    Stop-ScriptWithError -ErrorMessage "FFmpeg is not installed globally on the system. Install it or add it to the PATH. You may need to restart the browser from where you call the command."
   }
 }
 
@@ -564,10 +570,11 @@ function Out-ColoredLog {
     if ($script:lastWasProgress) { Write-Host "" }
   }
 }
+
 <#*==========================================================================
 * ℹ            GET PARAMETERS
 ===========================================================================#>
-if ($version) {
+if ($Version) {
   Show-Version
   Write-Host "Source  : " -NoNewline
   Write-Host "https://github.com/Fred-Vatin/run-yt-dlp-from-browser" -ForegroundColor Cyan
@@ -582,7 +589,7 @@ if ($version) {
 * ℹ		HANDLE HELP PARAMETER
 ===========================================================================#>
 
-if ((-not $install -and -not $uninstall -and -not $man -and -not $url) -or ($help)) {
+if ($Help) {
   Show-Help
   exit
 }
@@ -590,7 +597,7 @@ if ((-not $install -and -not $uninstall -and -not $man -and -not $url) -or ($hel
 <#*==========================================================================
 * ℹ		HANDLE MAN PARAMETER
 ===========================================================================#>
-if ($man) {
+if ($Man) {
   Start-Process "$repo"
   exit
 }
@@ -598,27 +605,27 @@ if ($man) {
 * ℹ		HANDLE URL PARAMETER
 ===========================================================================#>
 # Handle -url parameter if no other parameters are specified
-if ($url -and -not $install -and -not $uninstall) {
+if ($Url -and -not $Install -and -not $Uninstall) {
   Show-Version
 
   Write-Host "`nScript called with argument " -NoNewline
   Write-Host "-url" -ForegroundColor Magenta
-  Write-Host "`t$url`n"
+  Write-Host "`t$Url`n"
 
   try {
 
     # If you call the script with -url only, create default command
-    if ($url.StartsWith("https://")) {
-      $url = "${protocol}:?type=auto&url=$url"
+    if ($Url.StartsWith("https://")) {
+      $Url = "${protocol}:?type=auto&url=$Url"
     }
 
     # Extract parts after ytdl:?
-    if ($url.StartsWith("${protocol}:?")) {
-      $startIndex = $url.IndexOf("${protocol}:?") + "${protocol}:?".Length
-      $queryString = $url.Substring($startIndex)
+    if ($Url.StartsWith("${protocol}:?")) {
+      $startIndex = $Url.IndexOf("${protocol}:?") + "${protocol}:?".Length
+      $queryString = $Url.Substring($startIndex)
     }
     else {
-      Stop-ScriptWithError -errorMessage "Expected URL must start with: \"${protocol}:?\"`n   However URL is: $url"
+      Stop-ScriptWithError -ErrorMessage "Expected URL must start with: \"${protocol}:?\"`n   However URL is: $Url"
     }
 
     # Init hashtable to stock parameters
@@ -660,12 +667,12 @@ if ($url -and -not $install -and -not $uninstall) {
       $script:TYPE = $($parameters['type'])
     }
     else {
-      Stop-ScriptWithError -errorMessage "[type] parameter is missing. It is required to tell yt-dlp what streams he has to download."
+      Stop-ScriptWithError -ErrorMessage "[type] parameter is missing. It is required to tell yt-dlp what streams he has to download."
     }
 
   }
   catch {
-    Stop-ScriptWithError -errorMessage "Error while processing URL" -ErrorRecord $_
+    Stop-ScriptWithError -ErrorMessage "Error while processing URL" -ErrorRecord $_
   }
 
   <#*==========================================================================
@@ -712,7 +719,7 @@ if ($url -and -not $install -and -not $uninstall) {
         Write-Host " Success: Folder created at `"$($NewFolder.FullName)`"`n" -ForegroundColor Green
       }
       catch {
-        Stop-ScriptWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -ErrorRecord $_
+        Stop-ScriptWithError -ErrorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -ErrorRecord $_
       }
     }
   }
@@ -734,7 +741,7 @@ if ($url -and -not $install -and -not $uninstall) {
     $script:DL_URL = $($parameters['url'])
   }
   else {
-    Stop-ScriptWithError -errorMessage "[url] parameter is missing. It is required to tell yt-dlp the download source."
+    Stop-ScriptWithError -ErrorMessage "[url] parameter is missing. It is required to tell yt-dlp the download source."
   }
 
   # handle auto
@@ -842,7 +849,7 @@ if ($url -and -not $install -and -not $uninstall) {
         exit
       }
       else {
-        Stop-ScriptWithError -errorMessage "Can not find $UI_Path"
+        Stop-ScriptWithError -ErrorMessage "Can not find $UI_Path"
       }
     }
   }
@@ -1021,10 +1028,8 @@ public static extern void CoTaskMemFree(IntPtr pv);
     )
   }
 
-  if ($debug) {
-    Write-Host "`$options: $options`n" -ForegroundColor Cyan
-    Write-Host "`$optionsString: $optionsString`n" -ForegroundColor Yellow
-  }
+  Write-Verbose "`$options: $options`n"
+  Write-Verbose "`$optionsString: $optionsString`n"
 
   Write-Host "yt-dlp $optionsString`n" -ForegroundColor Magenta
   Write-Host "running command…(wait)`n" -ForegroundColor DarkGray
@@ -1082,7 +1087,7 @@ public static extern void CoTaskMemFree(IntPtr pv);
   }
   else {
     WriteTitle "SCRIPT ENDED WITH ERROR" -ForegroundColor Red
-    Stop-ScriptWithError -errorMessage "yt-dlp terminate with error"
+    Stop-ScriptWithError -ErrorMessage "yt-dlp terminate with error"
   }
 
   # Read-Host -Prompt "Press Enter to exit"
@@ -1104,7 +1109,7 @@ if (-not (Test-AdminPrivileges)) {
 ===========================================================================#>
 $ytdlKey = "Registry::HKEY_CLASSES_ROOT\$protocol"
 
-if ($uninstall) {
+if ($Uninstall) {
   Show-Version
 
   WriteTitle "UNINSTALL"
@@ -1123,11 +1128,11 @@ if ($uninstall) {
       }
     }
     catch {
-      Stop-ScriptWithError -errorMessage "Uninstall failed" -exception $_.Exception
+      Stop-ScriptWithError -ErrorMessage "Uninstall failed" ErrorRecord $_
     }
   }
   else {
-    Stop-ScriptWithError -errorMessage "Sorry but this works only on Windows (for now)"
+    Stop-ScriptWithError -ErrorMessage "Sorry but this works only on Windows (for now)"
   }
 }
 
@@ -1135,7 +1140,7 @@ if ($uninstall) {
 * ℹ		HANDLE INSTALL PARAMETERS
 ===========================================================================#>
 
-if ($install) {
+if ($Install) {
   Show-Version
 
   WriteTitle "INSTALL"
@@ -1182,12 +1187,12 @@ if ($install) {
       Write-Host "`nINSTALLATION COMPLETE" -ForegroundColor Green
     }
     catch {
-      Stop-ScriptWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -ErrorRecord $_
+      Stop-ScriptWithError -ErrorMessage "Failed to add protocol '$protocol`://' into the registry" -ErrorRecord $_
     }
 
   }
   else {
-    Stop-ScriptWithError -errorMessage "Sorry but this works only on Windows (for now)"
+    Stop-ScriptWithError -ErrorMessage "Sorry but this works only on Windows (for now)"
   }
 
 }
