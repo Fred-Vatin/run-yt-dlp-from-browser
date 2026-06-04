@@ -11,6 +11,10 @@ param(
 # Stop the script if an error occurs.
 $ErrorActionPreference = 'Stop'
 
+# Uncomment to display the debug message
+# $DebugPreference = 'Continue'
+
+
 $ScriptVersion = "2.5.0"
 
 <#*==========================================================================
@@ -218,6 +222,53 @@ function TerminateWithError {
 
   exit 1
 }
+
+function Get-OSDownloadPath {
+  [CmdletBinding()]
+  [OutputType([string])]
+  param()
+
+  $registryPath = $null
+  $guidKey = $null
+  $rawPath = $null
+  $downloadsPath = $null
+
+  Write-Debug "Get-OSDownloadPath starting…"
+
+  if ($IsWindows) {
+    Write-Debug "Operating System detected: Windows"
+    $registryPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+    $guidKey = "{374DE290-123F-4565-9164-39C4925E467B}"
+
+    if (Test-Path -Path $registryPath) {
+      $rawPath = (Get-ItemPropertyValue -Path $registryPath -Name $guidKey -ErrorAction SilentlyContinue)
+      Write-Debug "Registry raw value retrieved: $rawPath"
+
+      if ($rawPath) {
+        $downloadsPath = [Environment]::ExpandEnvironmentVariables($rawPath)
+        Write-Debug "Expanded environment variables path: $downloadsPath"
+      }
+    }
+  }
+  elseif ($IsLinux -or $IsMacOS) {
+    Write-Debug "Operating System detected: Linux/MacOS"
+    $downloadsPath = Join-Path -Path $HOME -ChildPath "Downloads"
+  }
+
+  if (-not $downloadsPath) {
+    Write-Debug "No download path resolved yet. Falling back to default user profile subfolder."
+    $downloadsPath = Join-Path -Path $HOME -ChildPath "Downloads"
+  }
+
+  Write-Debug "Checking if path exists physically: $downloadsPath"
+  if ($downloadsPath -and (Test-Path -Path $downloadsPath -PathType Container)) {
+    Write-Debug "Path exists and is valid."
+    return $downloadsPath
+  }
+
+  Write-Debug "Path does not exist or is invalid. Returning `$null`."
+  return $null
+}
 <#*==========================================================================
 *	ℹ		PARAMETERS
 
@@ -243,31 +294,30 @@ catch {
 
 # Don’t edit this part unless you know what you do.
 # Get default downloads dir for each platform
+$OS_DownloadPath = Get-OSDownloadPath
 if (-not $DownloadsPath) {
-  if ($IsWindows) {
-    New-Variable -Name UserShellFolders -Value "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Option Constant
-    New-Variable -Name downloadsKey -Value "{374DE290-123F-4565-9164-39C4925E467B}" -Option Constant
-    New-Variable -Name DownloadsPath -Value ((Get-ItemProperty -Path $UserShellFolders -Name $downloadsKey).$downloadsKey) -Option Constant
-  }
-  elseif ($IsLinux -or $IsMacOS) {
-    New-Variable -Name DownloadsPath -Value (Join-Path -Path $HOME -ChildPath "Downloads") -Option Constant
-  }
-  else {
-    Write-Host "ERROR`n" -ForegroundColor Red
-    Write-Host "`tUnknown OS :`n`tCan not get the default Download directory." -ForegroundColor Red
-    Write-Host "`n`tOpen an issue. You can try to set the DownloadsPath in your `"config.ps1`" file.`nEXIT" -ForegroundColor Red
-    exit 1
+
+  $DownloadsPath = $OS_DownloadPath
+
+  if (-not $DownloadsPath) {
+    $Local:ErrorMessage = @"
+Can not get the user default Download directory.
+Run the script in debug mode and open an issue.
+You can try to set the DownloadsPath in your `"config.ps1`" file.
+"@
+    TerminateWithError -ErrorMessage "$Local:ErrorMessage"
   }
 }
 else {
   # Check if the DownloadsPath set in config.ps1 exists
   if (-not (Test-Path -Path $DownloadsPath -PathType Container)) {
-    Write-Host "ERROR`n" -ForegroundColor Red
-    Write-Host "`t`"$DownloadsPath`" :`n`tdoesn’t exist." -ForegroundColor Red
-    Write-Host "`n`tYou set a custom download path which is invalid in your `"config.ps1`" file.`nEXIT" -ForegroundColor Red
-    Write-Host "`tProvide a valid path or" -ForegroundColor Red
-    Write-Host "`ttry to comment the line to use default download dir for user.`nEXIT" -ForegroundColor Red
-    exit 1
+    $Local:ErrorMessage = @"
+`"$DownloadsPath`" : doesn’t exist.
+You set a "DownloadsPath" which is invalid in your `"config.ps1`" file
+Provide a valid path or
+try to comment the line to use the user default Download directory.
+"@
+    TerminateWithError -ErrorMessage "$Local:ErrorMessage"
   }
 }
 
