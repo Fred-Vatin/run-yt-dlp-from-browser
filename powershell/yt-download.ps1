@@ -345,6 +345,9 @@ foreach ($VarName in $Defaults.Keys) {
     Write-Warning "Variable '$VarName' is missing in your `"config.ps1`". We will use the fallback value: `"$($Defaults[$VarName])`""
     Write-Host
   }
+  else {
+    Write-Debug "Variable $VarName defined in `"config.ps1`" with value $((Get-Variable -Name $VarName).Value)" 
+  }
 }
 
 $myCookies = ""
