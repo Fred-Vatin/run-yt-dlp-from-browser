@@ -468,7 +468,7 @@ if ($url -and -not $install -and -not $uninstall) {
 
     # If you call the script with -url only, create default command
     if ($url.StartsWith("https://")) {
-      $url = "ytdl:?type=auto&url=$url"
+      $url = "${protocol}:?type=auto&url=$url"
     }
 
     # Extract parts after ytdl:?
