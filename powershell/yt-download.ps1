@@ -70,28 +70,61 @@ function Play-Sound {
 }
 
 function TerminateWithError {
-  param(
-    [string]$errorMessage = "Error happened.`nEXIT",
-    [System.Exception]$exception
+  param (
+    [string]$ErrorMessage = "Error happened",
+    [System.Management.Automation.ErrorRecord]$ErrorRecord
   )
 
   if ($PlaySound) {
     Play-Sound -Action Error
   }
 
-  if ($exception) {
-    $line = $_.InvocationInfo.ScriptLineNumber
+  if ($ErrorRecord) {
+    Write-Host "`n  $ErrorMessage  `n" -BackgroundColor DarkRed -ForegroundColor White
 
-    if ($line) {
-      Write-Host "`n$errorMessage :`n`t$($exception.Message)`n`tLine: $line`nEXIT" -ForegroundColor Red
+    # Step 1: Display primary exception
+    $currentException = $ErrorRecord.Exception
+    $primaryLine = $ErrorRecord.InvocationInfo.ScriptLineNumber
+
+    if ($primaryLine) {
+      Write-Host "Error at line: $primaryLine" -ForegroundColor Red
     }
-    else {
-      Write-Host "`n$errorMessage :`n$($exception.Message)`nEXIT" -ForegroundColor Red
+
+    $lastMessage = $null
+    if ($currentException) {
+      Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      $lastMessage = $currentException.Message
     }
+
+    # Step 2: Traverse inner exceptions with deduplication logic
+    while ($currentException.InnerException) {
+      $currentException = $currentException.InnerException
+
+      $innerLine = $null
+      if ($currentException.ErrorRecord -and $currentException.ErrorRecord.InvocationInfo) {
+        $innerLine = $currentException.ErrorRecord.InvocationInfo.ScriptLineNumber
+      }
+
+      # Deduplicate: skip if the message is identical and provides no new line context
+      if ($currentException.Message -eq $lastMessage -and -not $innerLine) {
+        continue
+      }
+
+      Write-Host "`n-> Caused by inner exception:" -ForegroundColor DarkGray
+      if ($innerLine) {
+        Write-Host "Error at line: $innerLine" -ForegroundColor Red
+      }
+
+      Write-Host "$($currentException.Message)" -ForegroundColor Yellow
+      $lastMessage = $currentException.Message
+    }
+
+    Write-Host "`n  EXIT  " -BackgroundColor DarkRed -ForegroundColor White
   }
   else {
-    Write-Host "ERROR`n" -ForegroundColor Red
-    Write-Host "   $errorMessage`n`nEXIT" -ForegroundColor Red
+    Write-Host "`n  ERROR  `n" -BackgroundColor DarkRed -ForegroundColor White
+    Write-Host "$ErrorMessage" -ForegroundColor Yellow
+    Write-Host "`n  EXIT  " -BackgroundColor DarkRed -ForegroundColor White
   }
 
   exit 1
@@ -491,7 +524,7 @@ if ($url -and -not $install -and -not $uninstall) {
 
   }
   catch {
-    TerminateWithError -errorMessage "Error while processing URL" -exception $_.Exception
+    TerminateWithError -errorMessage "Error while processing URL" -ErrorRecord $_
   }
 
   <#*==========================================================================
@@ -518,10 +551,12 @@ if ($url -and -not $install -and -not $uninstall) {
       Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
     }
     else {
-      TerminateWithError -errorMessage "The DOWNLOAD_DIR set in yt-dlp userscript : `"$DL_DIR`" doesn’t exist."
+      Write-Host "The DOWNLOAD_DIR set in yt-dlp userscript (Tampermonkey) : `"$DL_DIR`" doesn’t exist." -ForegroundColor Yellow
+      Write-Host "Trying fallback…" -ForegroundColor Yellow
+      $Script:DOWNLOAD_DIR_fallback = $true
     }
   }
-  else {
+  if ($DOWNLOAD_DIR_fallback -or -not $parameters.ContainsKey('dldir')) {
     $script:DL_DIR = $FullDownloadDir
     if (Test-Path -Path $DL_DIR -PathType Container) {
       Write-Host "- Download file in (unless if handled by YDL-UI.exe): $DL_DIR" -ForegroundColor Green
@@ -536,7 +571,7 @@ if ($url -and -not $install -and -not $uninstall) {
         Write-Host " Success: Folder created at `"$($NewFolder.FullName)`"`n" -ForegroundColor Green
       }
       catch {
-        TerminateWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -exception $_.Exception
+        TerminateWithError -errorMessage "Failed to create the folder `"$DownloadFolderName`" in `"$DownloadsPath`"." -ErrorRecord $_
       }
     }
   }
@@ -690,7 +725,7 @@ if ($url -and -not $install -and -not $uninstall) {
   * ℹ		Handle select downloaded file in Windows
   ===========================================================================#>
   if ($IsWindows) {
-    # Définition de l'API Windows native via C#
+    # Setting native Windows API via C#
     $Win32Signature = @'
 [DllImport("shell32.dll", ExactSpelling = true)]
 public static extern int SHParseDisplayName([MarshalAs(UnmanagedType.LPWStr)] string pszName, IntPtr pbc, out IntPtr ppidl, uint sfgaoIn, out uint psfgaoOut);
@@ -705,35 +740,50 @@ public static extern void CoTaskMemFree(IntPtr pv);
     $ShUtils = Add-Type -MemberDefinition $Win32Signature -Name "ShellUtils" -Namespace "Win32API" -PassThru
 
     function Show-InFileManager {
+      [CmdletBinding()]
       param (
         [string]$FilePath
       )
 
-      $AbsolutePath = (Resolve-Path -Path $FilePath -ErrorAction Stop).Path
-
-      # 1. Obtenir le PIDL (Pointer to an Item ID List) du fichier ciblé
-      $Pidl = [IntPtr]::Zero
-      $SfgaoOut = 0
-      $Result = $ShUtils::SHParseDisplayName($AbsolutePath, [IntPtr]::Zero, [ref]$Pidl, 0, [ref]$SfgaoOut)
-
-      if ($Result -eq 0 -and $Pidl -ne [IntPtr]::Zero) {
+      process {
         try {
-          # 2. Appeler l'API native.
-          # En passant le PIDL du fichier en premier argument et 0 en nombre d'éléments enfants,
-          # Windows (ou DOpus via interception) ouvre le dossier parent et sélectionne le fichier.
-          [void]$ShUtils::SHOpenFolderAndSelectItems($Pidl, 0, $null, 0)
-        }
-        finally {
-          # 3. Libérer la mémoire managée requise par l'API COM/Shell
-          if ($Pidl -ne [IntPtr]::Zero) {
-            $ShUtils::CoTaskMemFree($Pidl)
+          $AbsolutePath = (Resolve-Path -Path $FilePath -ErrorAction Stop).Path
+          # 1. Obtenir le PIDL (Pointer to an Item ID List) du fichier ciblé
+          $Pidl = [IntPtr]::Zero
+          $SfgaoOut = 0
+          $Result = $ShUtils::SHParseDisplayName($AbsolutePath, [IntPtr]::Zero, [ref]$Pidl, 0, [ref]$SfgaoOut)
+
+          if ($Result -eq 0 -and $Pidl -ne [IntPtr]::Zero) {
+            try {
+              # 2. Appeler l'API native.
+              [void]$ShUtils::SHOpenFolderAndSelectItems($Pidl, 0, $null, 0)
+            }
+            finally {
+              # 3. Libérer la mémoire managée requise par l'API COM/Shell
+              if ($Pidl -ne [IntPtr]::Zero) {
+                $ShUtils::CoTaskMemFree($Pidl)
+              }
+            }
+          }
+          else {
+            # Sécurité si l'API échoue : retour à la méthode basique
+            Start-Process explorer.exe -ArgumentList "/select,`"$AbsolutePath`""
           }
         }
+        catch {
+          # Pass $_.Exception as the InnerException to preserve the original root cause
+          $exception = [System.Management.Automation.RuntimeException]::new("File manager failed to open.", $_.Exception)
+          $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+            $exception,
+            "FileManagerError",
+            [System.Management.Automation.ErrorCategory]::NotSpecified,
+            $null
+          )
+
+          $PSCmdlet.ThrowTerminatingError($errorRecord)
+        }
       }
-      else {
-        # Sécurité si l'API échoue : retour à la méthode basique
-        Start-Process explorer.exe -ArgumentList "/select,`"$AbsolutePath`""
-      }
+
     }
   }
 
@@ -866,12 +916,20 @@ public static extern void CoTaskMemFree(IntPtr pv);
         if (Test-Path $TempPathFile) {
           $DownloadedFilePath = (Get-Content -Path $TempPathFile -Raw).Trim()
           Remove-Item -Path $TempPathFile -ErrorAction SilentlyContinue
-          Write-Host "DownloadedFilePath : `"$DownloadedFilePath`"" -ForegroundColor Yellow
         }
 
         # Apply file selection logic
         if ($DownloadedFilePath) {
-          Show-InFileManager -FilePath $DownloadedFilePath
+          Write-Host "DownloadedFilePath : `"$DownloadedFilePath`"" -ForegroundColor Yellow
+          try {
+            Show-InFileManager -FilePath $DownloadedFilePath
+          }
+          catch {
+            TerminateWithError -ErrorMessage "Show-InFileManager failed" -ErrorRecord $_
+          }
+        }
+        else {
+          TerminateWithError '$DownloadedFilePath was not find in $TempPathFile'
         }
       }
     }
@@ -985,7 +1043,7 @@ if ($install) {
       Write-Host "`nINSTALLATION COMPLETE" -ForegroundColor Green
     }
     catch {
-      TerminateWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -Exception $_.Exception
+      TerminateWithError -errorMessage "Failed to add protocol '$protocol`://' into the registry" -ErrorRecord $_
     }
 
   }
