@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.5.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.5.0...v2.5.1) (2026-06-04)
+
+
+### 🐞 Bug Fixes
+
+* better error handling ([1d7b1f3](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/1d7b1f399e5c2b1e771a83189b1b5613a6d16148))
+* enhance error handling with detailed messages and stack trace ([8ff1163](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/8ff11639ed4aef9330b24b38c3bfa01adcd8d0eb))
+* update URL protocol handling in command generation ([22ef999](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/22ef999eabe990948c743c7915c772c16f7a0c46))
+
 ## [2.5.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.4.0...v2.5.0) (2026-06-03)
 
 
