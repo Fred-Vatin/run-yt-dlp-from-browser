@@ -8,7 +8,7 @@ param(
   [switch]$Man
 )
 
-$ScriptVersion = "2.5.0"
+$ScriptVersion = "2.6.0"
 
 <#*==========================================================================
 *	ℹ		PARAMETERS
@@ -901,25 +901,25 @@ public static extern void CoTaskMemFree(IntPtr pv);
       process {
         try {
           $AbsolutePath = (Resolve-Path -Path $FilePath -ErrorAction Stop).Path
-          # 1. Obtenir le PIDL (Pointer to an Item ID List) du fichier ciblé
+          # 1. Obtain the PIDL (Pointer to an Item ID List) of the targeted file
           $Pidl = [IntPtr]::Zero
           $SfgaoOut = 0
           $Result = $ShUtils::SHParseDisplayName($AbsolutePath, [IntPtr]::Zero, [ref]$Pidl, 0, [ref]$SfgaoOut)
 
           if ($Result -eq 0 -and $Pidl -ne [IntPtr]::Zero) {
             try {
-              # 2. Appeler l'API native.
+              # 2. Call the native API.
               [void]$ShUtils::SHOpenFolderAndSelectItems($Pidl, 0, $null, 0)
             }
             finally {
-              # 3. Libérer la mémoire managée requise par l'API COM/Shell
+              # 3. Free managed memory required by COM/Shell API
               if ($Pidl -ne [IntPtr]::Zero) {
                 $ShUtils::CoTaskMemFree($Pidl)
               }
             }
           }
           else {
-            # Sécurité si l'API échoue : retour à la méthode basique
+            # Security if the API fails: return to the basic method
             Start-Process explorer.exe -ArgumentList "/select,`"$AbsolutePath`""
           }
         }
