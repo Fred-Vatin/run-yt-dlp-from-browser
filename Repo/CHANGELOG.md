@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.6.0](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.5.1...v2.6.0) (2026-08-09)
+
+
+### 🚀 Features
+
+* add debug output for defined variables in config.ps1 ([a467f86](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/a467f8659c60fcbd9c3a3055299651888f452577))
+* implement Get-OSDownloadPath function for dynamic download directory resolution ([7d7e86d](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/7d7e86d1ecb9a704c93f3fa232c3b8adb701bd29))
+
+
+### 🐞 Bug Fixes
+
+* VideoQuality must not be a constant ([5510be8](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/5510be8ca3f387ad35209ae823317bbf5cc07b69))
+
+
+### ✨ Polish
+
+* rename error handling function from TerminateWithError to Stop-ScriptWithError ([1ec5a96](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/1ec5a96c9cd6a96ee127f971b02d77ecbfc25a33))
+* standardize parameter casing and enhance verbose output in yt-download.ps1 ([ccd2612](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/ccd26126d4cffe4c0de774a609699702a9b7250d))
+* standardize parameter casing and enhance verbose output in yt-download.ps1 ([72839db](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/commit/72839db31a839cbcf270e59fbf08067e79c338b9))
+
 ## [2.5.1](https://github.com/Fred-Vatin/run-yt-dlp-from-browser/compare/v2.5.0...v2.5.1) (2026-06-04)
 
 
